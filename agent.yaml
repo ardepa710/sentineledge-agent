@@ -1,0 +1,6 @@
+agentid: 54b768f8-46ba-4491-ae11-8b26c1e3acb5
+agenttoken: 2231bbc0361915604d07aff0e57d27bf93e7265b40dbda2f21ee6b3890ef4364
+apikey: test-api-key-12345
+pollinterval: 10
+serverurl: http://localhost:8000
+tenantid: tenant-001
