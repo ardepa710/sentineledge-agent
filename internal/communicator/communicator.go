@@ -66,14 +66,14 @@ func Register(serverURL, tenantID, apiKey string) (*RegisterResponse, error) {
 		Post("/agents/register")
 
 	if err != nil {
-		return nil, fmt.Errorf("error registrando agente: %w", err)
+		return nil, fmt.Errorf("Error registering agent: %w", err)
 	}
 
 	if r.StatusCode() != 200 {
-		return nil, fmt.Errorf("servidor rechazó registro con código %d: %s", r.StatusCode(), r.String())
+		return nil, fmt.Errorf("Server rejected registration with code %d: %s", r.StatusCode(), r.String())
 	}
 
-	log.Printf("Agente registrado exitosamente. ID: %s", resp.ID)
+	log.Printf("Agent successfully registered. ID: %s", resp.ID)
 	return &resp, nil
 }
 
@@ -86,11 +86,11 @@ func (c *Communicator) PollCommands() ([]models.Command, error) {
 		Get(fmt.Sprintf("/commands/pending/%s", c.agentID))
 
 	if err != nil {
-		return nil, fmt.Errorf("error en poll: %w", err)
+		return nil, fmt.Errorf("error in poll: %w", err)
 	}
 
 	if resp.StatusCode() != 200 {
-		return nil, fmt.Errorf("servidor respondió %d", resp.StatusCode())
+		return nil, fmt.Errorf("server responded %d", resp.StatusCode())
 	}
 
 	return commands, nil
@@ -103,14 +103,14 @@ func (c *Communicator) ReportResult(result models.Result) error {
 		Post("/commands/result")
 
 	if err != nil {
-		return fmt.Errorf("error reportando resultado: %w", err)
+		return fmt.Errorf("error reporting result: %w", err)
 	}
 
 	if resp.StatusCode() != 200 {
-		return fmt.Errorf("servidor rechazó resultado con código %d", resp.StatusCode())
+		return fmt.Errorf("server rejected result with code %d", resp.StatusCode())
 	}
 
-	log.Printf("Resultado del job %s reportado exitosamente", result.JobID)
+	log.Printf("Job %s result reported successfully", result.JobID)
 	return nil
 }
 

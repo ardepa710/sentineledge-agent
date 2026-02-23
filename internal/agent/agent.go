@@ -59,7 +59,7 @@ func (a *Agent) Run() {
 func (a *Agent) tick() {
 	commands, err := a.comm.PollCommands()
 	if err != nil {
-		log.Printf("Error en poll: %v", err)
+		log.Printf("Error in poll: %v", err)
 		return
 	}
 
@@ -67,7 +67,7 @@ func (a *Agent) tick() {
 		return
 	}
 
-	log.Printf("%d comando(s) recibidos", len(commands))
+	log.Printf("%d command(s) recieved", len(commands))
 
 	for _, cmd := range commands {
 		cmdCopy := cmd
@@ -78,7 +78,7 @@ func (a *Agent) tick() {
 }
 
 func (a *Agent) executeCommand(cmd models.Command) {
-	log.Printf("Ejecutando job %s — tipo: %s", cmd.ID, cmd.Type)
+	log.Printf("Running job %s — type: %s", cmd.ID, cmd.Type)
 
 	// Usar ID del comando como JobID para el resultado
 	cmdForExecutor := models.Command{
@@ -92,6 +92,6 @@ func (a *Agent) executeCommand(cmd models.Command) {
 	result.JobID = cmd.ID
 
 	if err := a.comm.ReportResult(result); err != nil {
-		log.Printf("Error reportando job %s: %v", cmd.ID, err)
+		log.Printf("Error reporting job %s: %v", cmd.ID, err)
 	}
 }
