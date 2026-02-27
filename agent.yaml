@@ -1,4 +1,7 @@
-apikey: 2187dc3fa065f7e9c5f7818028608ef44a6ed098c0c75141c0c3a5281f5df245
-pollinterval: 10
-serverurl: https://saapi.ardepa.site
+agentid: 605307fe-0a27-44e4-80b4-26afe805cf2e
+pollinterval: 30
+serverurl: http://localhost:8000
 tenantid: tenant-sentineledge
+vaultclientid: user.f50ad073-3d5a-4bdd-8ce7-a4fed752c1e8
+vaultclientsecret: EKQOdtvqccwi2qasiIIjreKY20XOcZ
+vaulturl: https://pwd.ardepa.site

@@ -120,3 +120,22 @@ func (c *Communicator) Heartbeat() error {
 		Post(fmt.Sprintf("/agents/%s/heartbeat", c.agentID))
 	return err
 }
+
+// SendInventory envía el inventario del agente al servidor
+func (c *Communicator) SendInventory(inv *models.Inventory) error {
+	resp, err := c.client.R().
+		SetBody(inv).
+		Post("/agents/inventory")
+
+	if err != nil {
+		return fmt.Errorf("error sending inventory: %w", err)
+	}
+
+	if resp.StatusCode() != 200 {
+		return fmt.Errorf("server rejected inventory with code %d: %s", resp.StatusCode(), resp.String())
+	}
+
+	log.Printf("Inventory sent successfully — %d software items, %d disks, %d NICs",
+		len(inv.Software), len(inv.Disks), len(inv.NICs))
+	return nil
+}

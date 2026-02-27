@@ -6,6 +6,8 @@ import (
 
 	"github.com/sentineledge/agent/internal/communicator"
 	"github.com/sentineledge/agent/internal/executor"
+	"github.com/sentineledge/agent/internal/system"
+	"github.com/sentineledge/agent/internal/vault"
 	"github.com/sentineledge/agent/pkg/models"
 	"github.com/spf13/viper"
 )
@@ -15,24 +17,70 @@ type Agent struct {
 	comm   *communicator.Communicator
 }
 
+const (
+	OrgID       = "ebefd607-bd17-4a3f-aa01-4d1a28948ef5"
+	ColAgentsID = "d0f075e6-65d2-4f13-935c-e4d7a3dce261"
+	ColAPIID    = "056e9be8-69ac-4e5e-95a8-bcbf803824a3"
+)
+
 func New(cfg *Config) *Agent {
-	// Si no tenemos token, registrarse primero
 	if cfg.AgentToken == "" || cfg.AgentID == "" {
-		log.Println("Sin token/ID — registrando agente...")
+		log.Println("No token/ID — registering agent...")
 
 		resp, err := communicator.Register(cfg.ServerURL, cfg.TenantID, cfg.APIKey)
 		if err != nil {
-			log.Fatalf("No se pudo registrar el agente: %v", err)
+			log.Fatalf("Agent cannot be registered: %v", err)
 		}
 
 		cfg.AgentID = resp.ID
 		cfg.AgentToken = resp.Token
 
-		// Guardar token y ID para próximas ejecuciones
-		viper.Set("AgentID", resp.ID)
-		viper.Set("AgentToken", resp.Token)
-		if err := viper.WriteConfig(); err != nil {
-			log.Printf("Advertencia: no se pudo guardar config: %v", err)
+		// Si hay Vault configurado, guardar token en Vaultwarden
+		if cfg.VaultURL != "" && cfg.VaultClientID != "" && cfg.VaultClientSecret != "" {
+			vc := vault.NewClient(cfg.VaultURL, cfg.VaultClientID, cfg.VaultClientSecret)
+			err := vc.StoreSecret(
+				"AGENT_TOKEN_"+resp.ID,
+				resp.Token,
+				OrgID,
+				ColAgentsID,
+			)
+			if err != nil {
+				log.Printf("StoreSecret error: %v", err)
+			} else {
+				log.Println("Token stored in Vaultwarden successfully")
+			}
+			if err != nil {
+				log.Printf("Warning: could not store token in vault: %v — saving to agent.yaml", err)
+				viper.Set("AgentID", resp.ID)
+				viper.Set("PollInterval", cfg.PollInterval)
+				viper.Set("ServerURL", cfg.ServerURL)
+				viper.Set("TenantID", cfg.TenantID)
+				viper.Set("VaultURL", cfg.VaultURL)
+				viper.Set("VaultClientID", cfg.VaultClientID)
+				viper.Set("VaultClientSecret", cfg.VaultClientSecret)
+				viper.WriteConfig()
+			} else {
+				log.Println("Token stored in Vaultwarden successfully")
+				// Solo guardar AgentID en agent.yaml, nunca el token
+				viper.Set("AgentID", resp.ID)
+				viper.Set("PollInterval", cfg.PollInterval)
+				viper.Set("ServerURL", cfg.ServerURL)
+				viper.Set("TenantID", cfg.TenantID)
+				viper.Set("VaultURL", cfg.VaultURL)
+				viper.Set("VaultClientID", cfg.VaultClientID)
+				viper.Set("VaultClientSecret", cfg.VaultClientSecret)
+				viper.WriteConfig()
+			}
+		} else {
+			// Sin Vault — guardar en agent.yaml como antes
+			viper.Set("AgentID", resp.ID)
+			viper.Set("PollInterval", cfg.PollInterval)
+			viper.Set("ServerURL", cfg.ServerURL)
+			viper.Set("TenantID", cfg.TenantID)
+			viper.Set("VaultURL", cfg.VaultURL)
+			viper.Set("VaultClientID", cfg.VaultClientID)
+			viper.Set("VaultClientSecret", cfg.VaultClientSecret)
+			viper.WriteConfig()
 		}
 	}
 
@@ -41,18 +89,31 @@ func New(cfg *Config) *Agent {
 }
 
 func (a *Agent) Run() {
-	log.Printf("Agente iniciado — ID: %s", a.config.AgentID)
-	log.Printf("Servidor: %s", a.config.ServerURL)
-	log.Printf("Poll cada %d segundos", a.config.PollInterval)
-
-	ticker := time.NewTicker(time.Duration(a.config.PollInterval) * time.Second)
-	defer ticker.Stop()
+	log.Printf("Agent inicialized — ID: %s", a.config.AgentID)
+	log.Printf("Server: %s", a.config.ServerURL)
+	log.Printf("Poll every %d seconds", a.config.PollInterval)
 
 	// Poll inmediato al arrancar
 	a.tick()
 
-	for range ticker.C {
-		a.tick()
+	// Inventory al arrancar
+	go a.collectAndSendInventory()
+
+	// Ticker para poll de comandos
+	pollTicker := time.NewTicker(time.Duration(a.config.PollInterval) * time.Second)
+	defer pollTicker.Stop()
+
+	// Ticker para inventory cada 24 horas
+	inventoryTicker := time.NewTicker(24 * time.Hour)
+	defer inventoryTicker.Stop()
+
+	for {
+		select {
+		case <-pollTicker.C:
+			a.tick()
+		case <-inventoryTicker.C:
+			go a.collectAndSendInventory()
+		}
 	}
 }
 
@@ -93,5 +154,18 @@ func (a *Agent) executeCommand(cmd models.Command) {
 
 	if err := a.comm.ReportResult(result); err != nil {
 		log.Printf("Error reporting job %s: %v", cmd.ID, err)
+	}
+}
+
+func (a *Agent) collectAndSendInventory() {
+	log.Println("Collecting inventory...")
+	inv, err := system.CollectInventory(a.config.AgentID, a.config.Hostname)
+	if err != nil {
+		log.Printf("Inventory collection error: %v", err)
+		return
+	}
+	if err := a.comm.SendInventory(inv); err != nil {
+		log.Printf("Inventory send error: %v", err)
+		return
 	}
 }
