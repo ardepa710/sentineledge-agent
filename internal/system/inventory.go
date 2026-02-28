@@ -3,10 +3,12 @@ package system
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/sentineledge/agent/pkg/models"
 )
@@ -34,42 +36,18 @@ func CollectInventory(agentID, hostname string) (*models.Inventory, error) {
 // ── Windows ──────────────────────────────────────────────────────────────
 
 func collectWindows(inv *models.Inventory) error {
-	script := `
+	// Script principal — todo excepto software
+	mainScript := `
 $ErrorActionPreference = 'SilentlyContinue'
-
-# CPU
-$cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
-# RAM
-$ram = Get-CimInstance Win32_ComputerSystem
-# BIOS
-$bios = Get-CimInstance Win32_BIOS
-# Computer
-$comp = Get-CimInstance Win32_ComputerSystem
-# Serial
-$serial = Get-CimInstance Win32_BIOS
-# Disks
-$disks = Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3"
-# NICs
-$nics = Get-CimInstance Win32_NetworkAdapterConfiguration | Where-Object { $_.IPAddress -ne $null }
-# Software (registry - more complete than Win32_Product)
-$software = @()
-$paths = @(
-    'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*',
-    'HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*',
-    'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*'
-)
-foreach ($path in $paths) {
-    if (Test-Path $path) {
-        $software += Get-ItemProperty $path |
-            Where-Object { $_.DisplayName -ne $null -and $_.DisplayName -ne '' } |
-            Select-Object DisplayName, DisplayVersion, Publisher, InstallDate
-    }
-}
-$software = $software | Sort-Object DisplayName -Unique
+$cpu   = Get-WmiObject Win32_Processor | Select-Object -First 1
+$ram   = Get-WmiObject Win32_ComputerSystem
+$bios  = Get-WmiObject Win32_BIOS
+$disks = Get-WmiObject Win32_LogicalDisk -Filter "DriveType=3"
+$nics  = Get-WmiObject Win32_NetworkAdapterConfiguration | Where-Object { $_.IPAddress -ne $null }
 
 $result = @{
     cpu = @{
-        name           = $cpu.Name.Trim()
+        name            = $cpu.Name.Trim()
         number_of_cores = [int]$cpu.NumberOfCores
     }
     ram = @{
@@ -80,11 +58,11 @@ $result = @{
         manufacturer        = $bios.Manufacturer
     }
     computer = @{
-        manufacturer = $comp.Manufacturer.Trim()
-        model        = $comp.Model.Trim()
+        manufacturer = $ram.Manufacturer.Trim()
+        model        = $ram.Model.Trim()
     }
     serial = @{
-        serial_number = $serial.SerialNumber
+        serial_number = $bios.SerialNumber
     }
     disks = @($disks | ForEach-Object {
         @{
@@ -100,33 +78,72 @@ $result = @{
             ip_addresses = @($_.IPAddress | Where-Object { $_ -ne $null })
         }
     })
-    software = @($software | ForEach-Object {
-        @{
-            name         = $_.DisplayName
-            version      = if ($_.DisplayVersion) { $_.DisplayVersion } else { "" }
-            publisher    = if ($_.Publisher) { $_.Publisher } else { "" }
-            install_date = if ($_.InstallDate) { $_.InstallDate } else { "" }
-        }
-    })
 }
-
 $result | ConvertTo-Json -Depth 5 -Compress
 `
 
-	out, err := runPowerShell(script)
+	// Script de software — separado
+	softwareScript := `
+$ErrorActionPreference = 'SilentlyContinue'
+$software = @()
+$paths = @(
+    'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*',
+    'HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*',
+    'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*'
+)
+foreach ($path in $paths) {
+    if (Test-Path $path) {
+        $software += Get-ItemProperty $path -ErrorAction SilentlyContinue |
+            Where-Object { $_.DisplayName -ne $null -and $_.DisplayName -ne '' } |
+            Select-Object DisplayName, DisplayVersion, Publisher, InstallDate
+    }
+}
+$software = $software | Sort-Object DisplayName -Unique
+@($software | ForEach-Object {
+    @{
+        name         = $_.DisplayName
+        version      = if ($_.DisplayVersion) { $_.DisplayVersion } else { "" }
+        publisher    = if ($_.Publisher) { $_.Publisher } else { "" }
+        install_date = if ($_.InstallDate) { $_.InstallDate } else { "" }
+    }
+}) | ConvertTo-Json -Depth 3 -Compress
+`
+
+	// Correr en paralelo
+	type swResult struct {
+		data []models.InventorySoftware
+		err  error
+	}
+
+	swCh := make(chan swResult, 1)
+	go func() {
+		out, err := runPowerShell(softwareScript)
+		if err != nil {
+			swCh <- swResult{nil, err}
+			return
+		}
+		var sw []models.InventorySoftware
+		if err := json.Unmarshal([]byte(out), &sw); err != nil {
+			swCh <- swResult{nil, err}
+			return
+		}
+		swCh <- swResult{sw, nil}
+	}()
+
+	// Correr script principal
+	out, err := runPowerShell(mainScript)
 	if err != nil {
-		return fmt.Errorf("powershell error: %w", err)
+		return fmt.Errorf("main script error: %w", err)
 	}
 
 	var raw struct {
-		CPU      models.InventoryCPU        `json:"cpu"`
-		RAM      models.InventoryRAM        `json:"ram"`
-		BIOS     models.InventoryBIOS       `json:"bios"`
-		Computer models.InventoryComputer   `json:"computer"`
-		Serial   models.InventorySerial     `json:"serial"`
-		Disks    []models.InventoryDisk     `json:"disks"`
-		NICs     []models.InventoryNIC      `json:"nics"`
-		Software []models.InventorySoftware `json:"software"`
+		CPU      models.InventoryCPU      `json:"cpu"`
+		RAM      models.InventoryRAM      `json:"ram"`
+		BIOS     models.InventoryBIOS     `json:"bios"`
+		Computer models.InventoryComputer `json:"computer"`
+		Serial   models.InventorySerial   `json:"serial"`
+		Disks    []models.InventoryDisk   `json:"disks"`
+		NICs     []models.InventoryNIC    `json:"nics"`
 	}
 
 	if err := json.Unmarshal([]byte(out), &raw); err != nil {
@@ -140,7 +157,14 @@ $result | ConvertTo-Json -Depth 5 -Compress
 	inv.Serial = raw.Serial
 	inv.Disks = raw.Disks
 	inv.NICs = raw.NICs
-	inv.Software = raw.Software
+
+	// Esperar software
+	swRes := <-swCh
+	if swRes.err != nil {
+		log.Printf("Warning: software inventory error: %v", swRes.err)
+	} else {
+		inv.Software = swRes.data
+	}
 
 	return nil
 }
@@ -186,11 +210,28 @@ func collectLinux(inv *models.Inventory) error {
 
 func runPowerShell(script string) (string, error) {
 	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", script)
-	out, err := cmd.Output()
-	if err != nil {
-		return "", err
+	cmd.WaitDelay = 180 * time.Second
+
+	// Timeout de 2 minutos
+	done := make(chan error, 1)
+	var out []byte
+	var cmdErr error
+
+	go func() {
+		out, cmdErr = cmd.Output()
+		done <- cmdErr
+	}()
+
+	select {
+	case err := <-done:
+		if err != nil {
+			return "", err
+		}
+	case <-time.After(120 * time.Second):
+		cmd.Process.Kill()
+		return "", fmt.Errorf("powershell timeout after 120s")
 	}
-	// Trim BOM and whitespace
+
 	result := strings.TrimSpace(string(out))
 	result = strings.TrimPrefix(result, "\xef\xbb\xbf")
 	return result, nil

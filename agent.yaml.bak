@@ -1,0 +1,6 @@
+ServerURL: "https://saapi.ardepa.site"
+TenantID: "tenant-sentineledge"
+VaultURL: "https://pwd.ardepa.site"
+VaultClientID: "user.f50ad073-3d5a-4bdd-8ce7-a4fed752c1e8"
+VaultClientSecret: "EKQOdtvqccwi2qasiIIjreKY20XOcZ"
+PollInterval: 30
