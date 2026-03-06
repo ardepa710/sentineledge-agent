@@ -6,12 +6,26 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/sentineledge/agent/internal/updater"
 	"github.com/sentineledge/agent/pkg/models"
 )
 
 func Execute(cmd models.Command) models.Result {
 	result := models.Result{
 		JobID: cmd.ID,
+	}
+
+	// Comando especial: update
+	if cmd.Type == "update" {
+		if err := updater.Update(); err != nil {
+			result.ExitCode = 1
+			result.Stderr = err.Error()
+		} else {
+			result.ExitCode = 0
+			result.Stdout = "Update initiated — service restarting"
+		}
+		result.FinishedAt = time.Now().UTC()
+		return result
 	}
 
 	timeout := time.Duration(cmd.Timeout) * time.Second
