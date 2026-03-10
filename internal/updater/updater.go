@@ -1,6 +1,9 @@
 package updater
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -12,27 +15,46 @@ import (
 )
 
 const (
-	DownloadURL = "https://github.com/ardepa710/sentineledge-agent/releases/latest/download/sentineledge-agent.exe"
+	VersionURL  = "https://saapi.ardepa.site/version"
 	ServiceName = "SentinelEdgeAgent"
 	InstallDir  = `C:\Program Files\SentinelEdge`
 )
 
+type VersionInfo struct {
+	Version     string `json:"version"`
+	Hash        string `json:"hash"`
+	DownloadURL string `json:"download_url"`
+}
+
 func Update() error {
-	log.Println("Starting auto-update...")
+	log.Println("Fetching version info...")
+
+	// 1. Obtener version info desde la API
+	info, err := getVersionInfo()
+	if err != nil {
+		return fmt.Errorf("failed to get version info: %w", err)
+	}
+	log.Printf("Target version: %s hash: %s", info.Version, info.Hash[:8])
 
 	exePath := filepath.Join(InstallDir, "sentineledge-agent.exe")
 	tmpPath := filepath.Join(InstallDir, "sentineledge-agent-update.exe")
 
-	// 1. Descargar nuevo exe
-	log.Printf("Downloading from %s", DownloadURL)
-	if err := download(DownloadURL, tmpPath); err != nil {
+	// 2. Descargar nuevo exe
+	log.Printf("Downloading from %s", info.DownloadURL)
+	if err := download(info.DownloadURL, tmpPath); err != nil {
 		return fmt.Errorf("download failed: %w", err)
 	}
 	log.Println("Download complete")
 
-	// 2. Script PowerShell para reemplazar y reiniciar
-	// Lo hacemos con un script separado porque no podemos reemplazar
-	// el exe mientras está corriendo
+	// 3. Verificar hash
+	log.Println("Verifying integrity...")
+	if err := verifyHash(tmpPath, info.Hash); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("integrity check failed: %w", err)
+	}
+	log.Println("Hash verified OK")
+
+	// 4. Script PowerShell para reemplazar y reiniciar
 	script := fmt.Sprintf(`
 Start-Sleep -Seconds 2
 Stop-Service "%s" -Force -ErrorAction SilentlyContinue
@@ -47,8 +69,8 @@ Start-Service "%s"
 		return fmt.Errorf("failed to write update script: %w", err)
 	}
 
-	// 3. Ejecutar script en background y salir
-	log.Println("Launching update script and restarting service...")
+	// 5. Ejecutar script en background
+	log.Println("Launching update script...")
 	cmd := exec.Command("powershell.exe",
 		"-NonInteractive", "-NoProfile",
 		"-ExecutionPolicy", "Bypass",
@@ -58,10 +80,45 @@ Start-Service "%s"
 		return fmt.Errorf("failed to start update script: %w", err)
 	}
 
-	// Dar tiempo al script para arrancar antes de que el servicio se detenga
 	time.Sleep(500 * time.Millisecond)
-
 	log.Println("Update initiated — service will restart with new version")
+	return nil
+}
+
+func getVersionInfo() (*VersionInfo, error) {
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Get(VersionURL)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var info VersionInfo
+	if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
+		return nil, err
+	}
+	if info.Hash == "" || info.DownloadURL == "" {
+		return nil, fmt.Errorf("incomplete version info from API")
+	}
+	return &info, nil
+}
+
+func verifyHash(filePath, expectedHash string) error {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return err
+	}
+
+	actual := hex.EncodeToString(h.Sum(nil))
+	if actual != expectedHash {
+		return fmt.Errorf("hash mismatch: expected %s got %s", expectedHash[:8], actual[:8])
+	}
 	return nil
 }
 
