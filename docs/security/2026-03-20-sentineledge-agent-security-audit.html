@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Security Audit — SentinelEdge Agent</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07090f;--surface:#0d1424;--card:#111827;--card2:#131e2e;
+  --border:#1e293b;--border2:#263248;--text:#f1f5f9;--muted:#64748b;
+  --accent:#38bdf8;--accent2:#818cf8;
+  --c-crit:#f87171;--c-high:#fb923c;--c-med:#fbbf24;--c-low:#4ade80;
+}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:14px;line-height:1.65;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+code,pre{font-family:'Cascadia Code','Fira Code','Consolas',monospace;font-size:12.5px}
+
+/* ── Layout ── */
+.report{max-width:860px;margin:0 auto;padding:0 24px 80px}
+
+/* ── Cover ── */
+.cover{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:80px 40px;background:radial-gradient(ellipse 70% 60% at 50% 30%,rgba(56,189,248,.06) 0%,transparent 70%)}
+.cover-shield{margin-bottom:32px;opacity:.9}
+.cover-eyebrow{font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+.cover-title{font-size:38px;font-weight:800;letter-spacing:-.03em;background:linear-gradient(135deg,#f1f5f9 30%,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+.cover-subtitle{font-size:20px;font-weight:600;color:var(--accent);margin-bottom:32px}
+.cover-meta{display:flex;gap:32px;justify-content:center;flex-wrap:wrap;margin-bottom:48px}
+.cover-meta-item{display:flex;flex-direction:column;align-items:center;gap:4px}
+.cover-meta-label{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
+.cover-meta-value{font-size:13px;font-weight:600;color:var(--text)}
+.cover-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:99px;border:1px solid var(--border2);background:var(--card);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.cover-divider{width:60px;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;margin:0 auto 40px}
+
+/* ── Section ── */
+.section{padding:64px 0 0}
+.section-label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.section-title{font-size:24px;font-weight:700;letter-spacing:-.02em;color:var(--text);margin-bottom:4px}
+.section-subtitle{font-size:14px;color:var(--muted);margin-bottom:32px}
+.section-divider{height:1px;background:var(--border);margin-bottom:32px}
+
+/* ── Risk summary boxes ── */
+.risk-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:32px}
+.risk-box{border-radius:10px;padding:20px 16px;text-align:center;border:1px solid}
+.risk-box .risk-num{font-size:42px;font-weight:800;letter-spacing:-.04em;line-height:1}
+.risk-box .risk-label{font-size:10px;letter-spacing:.15em;text-transform:uppercase;margin-top:6px;font-weight:600}
+.risk-box.crit{border-color:rgba(248,113,113,.35);background:rgba(248,113,113,.07)}
+.risk-box.crit .risk-num{color:var(--c-crit)}
+.risk-box.crit .risk-label{color:var(--c-crit)}
+.risk-box.high{border-color:rgba(251,146,60,.35);background:rgba(251,146,60,.07)}
+.risk-box.high .risk-num{color:var(--c-high)}
+.risk-box.high .risk-label{color:var(--c-high)}
+.risk-box.med{border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.07)}
+.risk-box.med .risk-num{color:var(--c-med)}
+.risk-box.med .risk-label{color:var(--c-med)}
+.risk-box.low{border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.07)}
+.risk-box.low .risk-num{color:var(--c-low)}
+.risk-box.low .risk-label{color:var(--c-low)}
+
+/* ── Overall risk indicator ── */
+.overall-risk{display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:10px;background:var(--card);border:1px solid var(--border2);margin-bottom:32px}
+.overall-risk .or-label{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
+.overall-risk .or-value{font-size:18px;font-weight:700}
+.overall-risk .or-desc{font-size:13px;color:var(--muted);margin-left:auto}
+
+/* ── Stack table ── */
+.stack-table{width:100%;border-collapse:collapse;margin-bottom:32px;background:var(--card);border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+.stack-table th{text-align:left;padding:8px 14px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);background:var(--surface);border-bottom:1px solid var(--border)}
+.stack-table td{padding:9px 14px;font-size:13px;border-bottom:1px solid var(--border)}
+.stack-table tr:last-child td{border-bottom:none}
+.stack-table td:first-child{color:var(--muted);font-size:12px;width:160px;white-space:nowrap}
+.stack-table td:last-child{color:var(--text)}
+
+/* ── Finding card ── */
+.findings-list{display:flex;flex-direction:column;gap:16px}
+.finding-card{border-radius:10px;border:1px solid;overflow:hidden}
+.finding-header{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid}
+.sev-badge{display:inline-block;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.finding-id{font-size:11px;letter-spacing:.12em;font-family:'Cascadia Code','Fira Code','Consolas',monospace;color:var(--muted)}
+.finding-title{font-size:15px;font-weight:700;color:var(--text);flex:1;padding-left:4px}
+.finding-body{padding:18px;display:flex;flex-direction:column;gap:14px}
+.finding-field label{display:block;font-size:10px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;margin-bottom:5px}
+.finding-field p{font-size:13px;line-height:1.65}
+.finding-location{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:6px;background:rgba(255,255,255,.03);border:1px solid var(--border)}
+.finding-location .loc-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.finding-location code{font-size:12px;color:var(--accent)}
+
+/* ── Roadmap ── */
+.roadmap{display:flex;flex-direction:column;gap:0}
+.roadmap-phase{display:flex;gap:0;padding:0}
+.roadmap-phase-left{width:160px;flex-shrink:0;padding:20px 16px 20px 0;text-align:right}
+.roadmap-phase-num{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
+.roadmap-phase-name{font-size:14px;font-weight:700;color:var(--text);margin-top:2px}
+.roadmap-phase-when{font-size:12px;color:var(--muted);margin-top:2px}
+.roadmap-line{width:2px;background:var(--border2);flex-shrink:0;position:relative}
+.roadmap-dot{width:12px;height:12px;border-radius:50%;border:2px solid;position:absolute;left:50%;top:24px;transform:translateX(-50%)}
+.roadmap-items{flex:1;padding:20px 0 20px 20px;display:flex;flex-direction:column;gap:8px}
+.roadmap-item{padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:var(--card);font-size:13px;display:flex;align-items:flex-start;gap:10px}
+.roadmap-item .ri-sev{font-size:9px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-top:2px;white-space:nowrap;padding:2px 7px;border-radius:3px}
+.roadmap-item .ri-text{color:var(--text);line-height:1.4}
+.roadmap-item .ri-loc{font-size:11px;color:var(--muted);margin-top:2px;font-family:'Cascadia Code','Fira Code','Consolas',monospace}
+
+/* ── Ecosystem arch diagram ── */
+.arch-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:32px;overflow:hidden}
+.arch-wrap svg{display:block;width:100%;height:auto}
+
+/* ── Cross-project table ── */
+.xp-table{width:100%;border-collapse:collapse;margin-bottom:32px;font-size:13px}
+.xp-table th{text-align:left;padding:10px 14px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);background:var(--surface);border-bottom:1px solid var(--border)}
+.xp-table td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+.xp-table tr:last-child td{border-bottom:none}
+.xp-table td:first-child{font-weight:600;color:var(--c-crit);white-space:nowrap}
+.attack-chain{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:32px}
+.attack-chain h4{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+.chain-steps{display:flex;flex-direction:column;gap:8px}
+.chain-step{display:flex;gap:12px;align-items:flex-start;padding:10px 14px;border-radius:7px;background:rgba(255,255,255,.02);border:1px solid var(--border)}
+.chain-step .cs-num{width:24px;height:24px;border-radius:50%;background:var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+.chain-step .cs-content{flex:1}
+.chain-step .cs-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.chain-step .cs-text{font-size:13px;color:var(--text)}
+.chain-arrow{padding-left:50px;font-size:18px;color:var(--c-crit);margin:-4px 0}
+
+/* ── Footer ── */
+.report-footer{margin-top:80px;padding-top:24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted)}
+
+/* ── Print ── */
+@media print{
+  body{background:#fff;color:#0f172a}
+  .cover{min-height:auto;page-break-after:always;background:none;padding:60px 40px}
+  .cover-title{background:none;-webkit-text-fill-color:#0f172a;color:#0f172a;font-size:28px}
+  .cover-subtitle{color:#0369a1}
+  .cover-badge,.cover-meta-item .cover-meta-value{color:#334155}
+  .cover-meta-label,.cover-eyebrow{color:#64748b}
+  .section{padding:40px 0 0}
+  .section-title{color:#0f172a}
+  .section-subtitle,.section-label{color:#64748b}
+  .stack-table,.finding-card,.arch-wrap,.attack-chain,.roadmap-item,.xp-table{background:#f8fafc;border-color:#e2e8f0;color:#0f172a}
+  .stack-table th{background:#f1f5f9;color:#64748b}
+  .stack-table td:first-child{color:#475569}
+  .stack-table td:last-child{color:#0f172a}
+  .finding-header{border-color:#e2e8f0}
+  .finding-title{color:#0f172a}
+  .finding-field p,.finding-location code,.chain-step .cs-text,.roadmap-item .ri-text{color:#0f172a}
+  .finding-field label,.chain-step .cs-label,.roadmap-phase-num,.roadmap-phase-when,.overall-risk .or-desc,.or-label{color:#64748b}
+  .finding-location{background:#f1f5f9;border-color:#e2e8f0}
+  .finding-location code{color:#0369a1}
+  .overall-risk{background:#f8fafc;border-color:#e2e8f0}
+  .finding-card{page-break-inside:avoid}
+  .roadmap-phase{page-break-inside:avoid}
+  .report-footer{color:#64748b;border-color:#e2e8f0}
+  .risk-box.crit,.risk-box.high,.risk-box.med,.risk-box.low{background:#f8fafc}
+  .arch-wrap{background:#f8fafc;border-color:#e2e8f0}
+  .attack-chain h4{color:#64748b}
+  .chain-step{background:#f1f5f9;border-color:#e2e8f0}
+}
+</style>
+</head>
+<body>
+<div class="report">
+
+<!-- COVER -->
+<div class="cover">
+  <svg class="cover-shield" width="72" height="72" viewBox="0 0 64 64" fill="none">
+  <path d="M32 4L8 14v18c0 13.3 10.3 24.8 24 28 13.7-3.2 24-14.7 24-28V14L32 4z" fill="#38bdf8" fill-opacity=".15" stroke="#38bdf8" stroke-width="2"/>
+  <path d="M22 32l6 6 14-14" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+  <p class="cover-eyebrow">Security Audit Report</p>
+  <div class="cover-divider"></div>
+  <h1 class="cover-title">SentinelEdge</h1>
+  <h2 class="cover-subtitle">Agent</h2>
+  <div class="cover-meta">
+    <div class="cover-meta-item"><span class="cover-meta-label">Date</span><span class="cover-meta-value">2026-03-20</span></div>
+    <div class="cover-meta-item"><span class="cover-meta-label">Version</span><span class="cover-meta-value">1.0</span></div>
+    <div class="cover-meta-item"><span class="cover-meta-label">Findings</span><span class="cover-meta-value">6</span></div>
+    <div class="cover-meta-item"><span class="cover-meta-label">Auditor</span><span class="cover-meta-value">Automated Static Analysis</span></div>
+  </div>
+  <span class="cover-badge"><svg class="cover-shield" width="12" height="12" viewBox="0 0 64 64" fill="none">
+  <path d="M32 4L8 14v18c0 13.3 10.3 24.8 24 28 13.7-3.2 24-14.7 24-28V14L32 4z" fill="#64748b" fill-opacity=".15" stroke="#64748b" stroke-width="2"/>
+  <path d="M22 32l6 6 14-14" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg> CONFIDENTIAL — Internal Use Only</span>
+</div>
+
+<!-- EXECUTIVE SUMMARY -->
+<div class="section">
+  <p class="section-label">Section 1</p>
+  <h2 class="section-title">Executive Summary</h2>
+  <p class="section-subtitle">Security audit of the SentinelEdge Go Windows Service agent. The agent runs on managed Windows endpoints, collects hardware inventory, executes remote PowerShell commands, and auto-updates via GitHub Releases.</p>
+  <div class="section-divider"></div>
+  
+<div class="risk-grid">
+  <div class="risk-box crit"><div class="risk-num">0</div><div class="risk-label">Critical</div></div>
+  <div class="risk-box high"><div class="risk-num">2</div><div class="risk-label">High</div></div>
+  <div class="risk-box med"><div class="risk-num">2</div><div class="risk-label">Medium</div></div>
+  <div class="risk-box low"><div class="risk-num">2</div><div class="risk-label">Low</div></div>
+</div>
+<div class="overall-risk">
+  <div>
+    <div class="or-label">Overall Risk</div>
+    <div class="or-value" style="color:#f87171">HIGH</div>
+  </div>
+  <div style="width:1px;height:36px;background:var(--border);margin:0 8px"></div>
+  <div>
+    <div class="or-label">Total Findings</div>
+    <div class="or-value" style="color:var(--text)">6</div>
+  </div>
+  <span class="or-desc">Immediate remediation required — critical or multiple high-severity issues present.</span>
+</div>
+  <p class="section-label" style="margin-bottom:8px">Technology Stack</p>
+  
+<table class="stack-table">
+  <thead><tr><th>Component</th><th>Detail</th></tr></thead>
+  <tbody>
+    <tr><td>Language</td><td>Go 1.21+</td></tr><tr><td>Service Host</td><td>kardianos/service — Windows Service wrapper</td></tr><tr><td>Configuration</td><td>spf13/viper — config.yaml on disk</td></tr><tr><td>HTTP Client</td><td>go-resty/resty v2 — all API and Vault calls</td></tr><tr><td>Secrets</td><td>Vaultwarden via client_credentials OAuth2 on startup</td></tr><tr><td>Inventory</td><td>Windows WMI — StackExchange/wmi package</td></tr><tr><td>Command Exec</td><td>PowerShell 5.x / pwsh via os/exec</td></tr><tr><td>Auto-Update</td><td>GitHub Releases download + SHA256 hash verification</td></tr><tr><td>Deployment</td><td>Windows Service installed on managed endpoints</td></tr><tr><td>API</td><td>https://saapi.ardepa.site  (VPS Hostinger)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- FINDINGS -->
+<div class="section">
+  <p class="section-label">Section 2</p>
+  <h2 class="section-title">Security Findings</h2>
+  <p class="section-subtitle">Findings are ordered by severity. Each finding includes a description, business impact, and concrete remediation steps.</p>
+  <div class="section-divider"></div>
+  <div class="findings-list">
+    
+<div class="finding-card" style="border-color:rgba(251,146,60,.35);background:rgba(251,146,60,.10)">
+  <div class="finding-header" style="border-color:rgba(251,146,60,.35)">
+    <span class="sev-badge" style="background:#fb923c;color:#000">HIGH</span>
+    <span class="finding-id">AGENT-001</span>
+    <span class="finding-title">PowerShell Commands Executed Without an Allowlist</span>
+  </div>
+  <div class="finding-body">
+    <div class="finding-field">
+      <label style="color:#fb923c">What it is</label>
+      <p>The agent executes any PowerShell command string received from the API without validating it against a permitted-command list. The only control is the DASHBOARD_API_KEY required to create a command.</p>
+    </div>
+    <div class="finding-field">
+      <label style="color:#fb923c">Why it matters</label>
+      <p>If the API is compromised, or if an attacker obtains the DASHBOARD_API_KEY (currently exposed in the browser bundle — see DASH-001), they gain arbitrary code execution on every managed Windows endpoint. A single key compromise escalates to full fleet takeover.</p>
+    </div>
+    <div class="finding-field">
+      <label style="color:#fb923c">Remediation</label>
+      <p>Implement a command allowlist in internal/executor/executor.go. Define an enum of permitted command types (e.g., reboot, get-inventory, run-script:approved). Reject and log any payload that does not match. Consider signing command payloads with a separate key.</p>
+    </div>
+    <div class="finding-location">
+      <span class="loc-label">Location</span>
+      <code>internal/executor/executor.go</code>
+    </div>
+  </div>
+</div>
+<div class="finding-card" style="border-color:rgba(251,146,60,.35);background:rgba(251,146,60,.10)">
+  <div class="finding-header" style="border-color:rgba(251,146,60,.35)">
+    <span class="sev-badge" style="background:#fb923c;color:#000">HIGH</span>
+    <span class="finding-id">AGENT-002</span>
+    <span class="finding-title">Vault Client Secret Stored in Plaintext Environment File</span>
+  </div>
+  <div class="finding-body">
+    <div class="finding-field">
+      <label style="color:#fb923c">What it is</label>
+      <p>VAULT_CLIENT_SECRET is stored in a plaintext .env file on the VPS alongside the Docker containers, readable by any process running as root or any user with Docker socket access.</p>
+    </div>
+    <div class="finding-field">
+      <label style="color:#fb923c">Why it matters</label>
+      <p>An attacker with VPS access can read this secret and authenticate to Vaultwarden as the API service, extracting all stored secrets: DATABASE_URL, DASHBOARD_API_KEY, all agent tokens. This is full credential compromise of the entire ecosystem.</p>
+    </div>
+    <div class="finding-field">
+      <label style="color:#fb923c">Remediation</label>
+      <p>Use Docker secrets (docker secret create) or an encrypted store. Rotate VAULT_CLIENT_SECRET immediately if VPS has had unauthorized access. Add a monitoring alert on Vaultwarden for multiple failed auth attempts.</p>
+    </div>
+    <div class="finding-location">
+      <span class="loc-label">Location</span>
+      <code>.env (VPS /docker/sentineledge-agent/)</code>
+    </div>
+  </div>
+</div>
+<div class="finding-card" style="border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.10)">
+  <div class="finding-header" style="border-color:rgba(251,191,36,.35)">
+    <span class="sev-badge" style="background:#fbbf24;color:#000">MEDIUM</span>
+    <span class="finding-id">AGENT-003</span>
+    <span class="finding-title">Auto-Update Hash Fetched From Same API Without Signature Verification</span>
+  </div>
+  <div class="finding-body">
+    <div class="finding-field">
+      <label style="color:#fbbf24">What it is</label>
+      <p>The auto-update flow downloads the agent binary from GitHub Releases and compares its SHA256 against the hash returned by the /version endpoint — both the binary URL and the expected hash come from the same API.</p>
+    </div>
+    <div class="finding-field">
+      <label style="color:#fbbf24">Why it matters</label>
+      <p>A compromised API can serve a malicious binary alongside a matching hash. The SHA256 check passes because both values were crafted by the attacker. All agents auto-update to the malicious binary with no alert to the operator.</p>
+    </div>
+    <div class="finding-field">
+      <label style="color:#fbbf24">Remediation</label>
+      <p>Sign the release binary with a private key (e.g., using minisign or cosign). Embed the corresponding public key as a constant in the agent binary at compile time. Verify the signature before executing the update.</p>
+    </div>
+    <div class="finding-location">
+      <span class="loc-label">Location</span>
+      <code>internal/updater/updater.go</code>
+    </div>
+  </div>
+</div>
+<div class="finding-card" style="border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.10)">
+  <div class="finding-header" style="border-color:rgba(251,191,36,.35)">
+    <span class="sev-badge" style="background:#fbbf24;color:#000">MEDIUM</span>
+    <span class="finding-id">AGENT-004</span>
+    <span class="finding-title">No Exponential Backoff on API Communication Failures</span>
+  </div>
+  <div class="finding-body">
+    <div class="finding-field">
+      <label style="color:#fbbf24">What it is</label>
+      <p>When the API is unreachable, the agent retries at a fixed 30-second interval with no backoff or jitter logic.</p>
+    </div>
+    <div class="finding-field">
+      <label style="color:#fbbf24">Why it matters</label>
+      <p>During API outages, all agents retry simultaneously, creating a thundering-herd that amplifies load on the recovering API. This can extend the outage duration significantly across a large fleet.</p>
+    </div>
+    <div class="finding-field">
+      <label style="color:#fbbf24">Remediation</label>
+      <p>Implement exponential backoff with jitter in internal/communicator/communicator.go. Suggested formula: wait = min(30s * 2^attempt, 300s) * rand(0.8, 1.2). Reset the backoff counter on the first successful response.</p>
+    </div>
+    <div class="finding-location">
+      <span class="loc-label">Location</span>
+      <code>internal/communicator/communicator.go</code>
+    </div>
+  </div>
+</div>
+<div class="finding-card" style="border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.10)">
+  <div class="finding-header" style="border-color:rgba(74,222,128,.35)">
+    <span class="sev-badge" style="background:#4ade80;color:#000">LOW</span>
+    <span class="finding-id">AGENT-005</span>
+    <span class="finding-title">No TLS Certificate Pinning for API Communication</span>
+  </div>
+  <div class="finding-body">
+    <div class="finding-field">
+      <label style="color:#4ade80">What it is</label>
+      <p>The agent connects to saapi.ardepa.site using standard TLS certificate validation without pinning the specific server certificate or public key.</p>
+    </div>
+    <div class="finding-field">
+      <label style="color:#4ade80">Why it matters</label>
+      <p>On a managed endpoint behind a corporate SSL inspection proxy, the proxy can intercept agent-to-API traffic using a locally-trusted certificate. An attacker with this capability could read PowerShell output and inject commands.</p>
+    </div>
+    <div class="finding-field">
+      <label style="color:#4ade80">Remediation</label>
+      <p>Pin the API certificate's public key hash in the resty client TLS config. Add a mechanism to update the pin via a signed configuration push before planned certificate renewals.</p>
+    </div>
+    <div class="finding-location">
+      <span class="loc-label">Location</span>
+      <code>internal/communicator/communicator.go</code>
+    </div>
+  </div>
+</div>
+<div class="finding-card" style="border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.10)">
+  <div class="finding-header" style="border-color:rgba(74,222,128,.35)">
+    <span class="sev-badge" style="background:#4ade80;color:#000">LOW</span>
+    <span class="finding-id">AGENT-006</span>
+    <span class="finding-title">Agent Bearer Tokens Never Expire</span>
+  </div>
+  <div class="finding-body">
+    <div class="finding-field">
+      <label style="color:#4ade80">What it is</label>
+      <p>Tokens issued at agent registration are permanent. There is no TTL, no expiry field in the database, and no refresh mechanism.</p>
+    </div>
+    <div class="finding-field">
+      <label style="color:#4ade80">Why it matters</label>
+      <p>A decommissioned or re-imaged endpoint retains a permanently valid credential. If the token leaks (e.g., from a disk image backup), it provides indefinite API access for that agent_id with no detection mechanism.</p>
+    </div>
+    <div class="finding-field">
+      <label style="color:#4ade80">Remediation</label>
+      <p>Add token_issued_at and token_expires_at fields to the Agent model. Implement a token refresh endpoint. Set a default TTL of 90 days with automatic renewal on each heartbeat if expiry is within 7 days.</p>
+    </div>
+    <div class="finding-location">
+      <span class="loc-label">Location</span>
+      <code>sentineledge-api/api/app/models/agent.py · internal/agent/agent.go</code>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<!-- REMEDIATION ROADMAP -->
+<div class="section">
+  <p class="section-label">Section 3</p>
+  <h2 class="section-title">Remediation Roadmap</h2>
+  <p class="section-subtitle">Recommended remediation order by business risk. Items within a phase can be addressed in parallel.</p>
+  <div class="section-divider"></div>
+  <div class="roadmap">
+    
+<div class="roadmap-phase">
+  <div class="roadmap-phase-left">
+    <div class="roadmap-phase-num">Phase 1</div>
+    <div class="roadmap-phase-name">Immediate</div>
+    <div class="roadmap-phase-when">Week 1–2</div>
+  </div>
+  <div class="roadmap-line"><div class="roadmap-dot" style="background:#fb923c;border-color:#fb923c"></div></div>
+  <div class="roadmap-items">
+    
+  <div class="roadmap-item">
+    <span class="ri-sev" style="background:rgba(251,146,60,.10);color:#fb923c;border:1px solid rgba(251,146,60,.35)">HIGH</span>
+    <div>
+      <div class="ri-text">Implement PowerShell command allowlist — reject any payload not matching permitted types</div>
+      <div class="ri-loc">internal/executor/executor.go</div>
+    </div>
+  </div>
+    
+  <div class="roadmap-item">
+    <span class="ri-sev" style="background:rgba(251,146,60,.10);color:#fb923c;border:1px solid rgba(251,146,60,.35)">HIGH</span>
+    <div>
+      <div class="ri-text">Rotate VaultClientSecret — move from .env to Docker secrets on VPS</div>
+      <div class="ri-loc">VPS /docker/sentineledge-agent/.env</div>
+    </div>
+  </div>
+  </div>
+</div>
+<div class="roadmap-phase">
+  <div class="roadmap-phase-left">
+    <div class="roadmap-phase-num">Phase 2</div>
+    <div class="roadmap-phase-name">Short-term</div>
+    <div class="roadmap-phase-when">Month 1</div>
+  </div>
+  <div class="roadmap-line"><div class="roadmap-dot" style="background:#fbbf24;border-color:#fbbf24"></div></div>
+  <div class="roadmap-items">
+    
+  <div class="roadmap-item">
+    <span class="ri-sev" style="background:rgba(251,191,36,.10);color:#fbbf24;border:1px solid rgba(251,191,36,.35)">MEDIUM</span>
+    <div>
+      <div class="ri-text">Add cosign/minisign signature to release binaries — embed public key in agent</div>
+      <div class="ri-loc">internal/updater/updater.go</div>
+    </div>
+  </div>
+    
+  <div class="roadmap-item">
+    <span class="ri-sev" style="background:rgba(251,191,36,.10);color:#fbbf24;border:1px solid rgba(251,191,36,.35)">MEDIUM</span>
+    <div>
+      <div class="ri-text">Implement exponential backoff with jitter (30s base, 300s cap, ±20% jitter)</div>
+      <div class="ri-loc">internal/communicator/communicator.go</div>
+    </div>
+  </div>
+  </div>
+</div>
+<div class="roadmap-phase">
+  <div class="roadmap-phase-left">
+    <div class="roadmap-phase-num">Phase 3</div>
+    <div class="roadmap-phase-name">Long-term</div>
+    <div class="roadmap-phase-when">Quarter 2</div>
+  </div>
+  <div class="roadmap-line"><div class="roadmap-dot" style="background:#4ade80;border-color:#4ade80"></div></div>
+  <div class="roadmap-items">
+    
+  <div class="roadmap-item">
+    <span class="ri-sev" style="background:rgba(74,222,128,.10);color:#4ade80;border:1px solid rgba(74,222,128,.35)">LOW</span>
+    <div>
+      <div class="ri-text">Pin API TLS certificate fingerprint in resty client TLS config</div>
+      <div class="ri-loc">internal/communicator/communicator.go</div>
+    </div>
+  </div>
+    
+  <div class="roadmap-item">
+    <span class="ri-sev" style="background:rgba(74,222,128,.10);color:#4ade80;border:1px solid rgba(74,222,128,.35)">LOW</span>
+    <div>
+      <div class="ri-text">Add token expiry: token_expires_at field + refresh on heartbeat (90-day TTL)</div>
+      <div class="ri-loc">internal/agent/agent.go + API models</div>
+    </div>
+  </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="report-footer">
+  <span>SentinelEdge Security Audit · 2026-03-20 · CONFIDENTIAL</span>
+  <span>Automated static analysis — manual verification recommended for all findings</span>
+</div>
+</div>
+</body>
+</html>
