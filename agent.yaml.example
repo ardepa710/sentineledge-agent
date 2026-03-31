@@ -1,0 +1,7 @@
+ServerURL: "https://saapi.ardepa.site"
+TenantID: "tenant-sentineledge"
+VaultURL: "https://pwd.ardepa.site"
+VaultClientID: "user.xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+VaultClientSecret: ""          # Set this, or use env var SE_VAULT_CLIENT_SECRET
+PollInterval: 30
+# AgentID and AgentToken are populated automatically after first registration

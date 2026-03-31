@@ -1,0 +1,15 @@
+# Agent runtime configuration — these files contain per-environment secrets
+# (VaultClientSecret, AgentID, AgentToken) and must never be committed.
+# Use agent.yaml.example as the template.
+agent.yaml
+agent-prod.yaml
+agent.yaml.bak
+*.yaml.bak
+
+# Compiled binaries
+*.exe
+Installer/sentineledge-agent.exe
+
+# Build output
+dist/
+build/

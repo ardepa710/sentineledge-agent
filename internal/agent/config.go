@@ -35,6 +35,13 @@ func LoadConfig() *Config {
 	viper.SetEnvPrefix("SE")
 	viper.AutomaticEnv()
 
+	// Explicit env var bindings for sensitive fields.
+	// These take precedence over agent.yaml and allow operators to inject
+	// secrets via the Windows Service environment without writing them to disk.
+	// SE_VAULT_CLIENT_SECRET overrides VaultClientSecret in agent.yaml.
+	viper.BindEnv("VaultClientSecret", "SE_VAULT_CLIENT_SECRET") //nolint:errcheck
+	viper.BindEnv("APIKey", "SE_API_KEY")                        //nolint:errcheck
+
 	viper.SetDefault("PollInterval", 30)
 	viper.SetDefault("ServerURL", "https://saapi.ardepa.site")
 

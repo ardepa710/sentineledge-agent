@@ -1,11 +1,23 @@
 ﻿# SentinelEdge Agent - Installer
 # Run as Administrator
-$InstallDir = "C:\Program Files\SentinelEdge"
-$ServerURL  = "https://saapi.ardepa.site"
-$TenantID   = "tenant-sentineledge"
-$VaultURL   = "https://pwd.ardepa.site"
+#
+# USAGE:
+#   .\install.ps1 -VaultClientSecret "your-secret-here"
+#
+# The VaultClientSecret is required and must NOT be hardcoded here.
+# Obtain it from the Vaultwarden admin UI or from the IT team secrets store.
+# NEVER commit this script with a real secret value.
+
+param(
+    [Parameter(Mandatory = $true)]
+    [string]$VaultClientSecret
+)
+
+$InstallDir        = "C:\Program Files\SentinelEdge"
+$ServerURL         = "https://saapi.ardepa.site"
+$TenantID          = "tenant-sentineledge"
+$VaultURL          = "https://pwd.ardepa.site"
 $VaultClientID     = "user.f50ad073-3d5a-4bdd-8ce7-a4fed752c1e8"
-$VaultClientSecret = "EKQOdtvqccwi2qasiIIjreKY20XOcZ"
 
 Write-Host ""
 Write-Host "======================================" -ForegroundColor Cyan
