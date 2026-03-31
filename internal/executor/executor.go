@@ -3,9 +3,12 @@ package executor
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"log"
 	"os/exec"
 	"time"
 
+	"github.com/sentineledge/agent/internal/allowlist"
 	"github.com/sentineledge/agent/internal/updater"
 	"github.com/sentineledge/agent/pkg/models"
 )
@@ -13,6 +16,17 @@ import (
 func Execute(cmd models.Command) models.Result {
 	result := models.Result{
 		JobID: cmd.ID,
+	}
+
+	// Security: validate command against allowlist before any execution.
+	// Deny-by-default: unknown types and non-allowlisted payloads are rejected here.
+	if err := allowlist.Validate(cmd.Type, cmd.Payload); err != nil {
+		log.Printf("SECURITY: job %s rejected by allowlist — %v", cmd.ID, err)
+		result.ExitCode = 1
+		result.Stderr = fmt.Sprintf("command rejected by security allowlist: %v", err)
+		result.Error = "command_not_allowed"
+		result.FinishedAt = time.Now().UTC()
+		return result
 	}
 
 	// Comando especial: update
