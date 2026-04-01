@@ -264,8 +264,11 @@ $VaultClientSecret = "<REDACTED>"   # pass as -VaultClientSecret param, never ha
 cd C:\proyectos\sentineledge-agent
 $env:GOOS="windows"
 $env:GOARCH="amd64"
-go build -o sentineledge-agent.exe main.go
+go build -ldflags "-X github.com/sentineledge/agent/internal/version.Version=v2026.04.01-1" -o sentineledge-agent.exe main.go
 ```
+
+> La versión se inyecta en build time vía `-ldflags`. Sin ese flag, el agente reportará `"dev"`.
+> Formato recomendado: `v{año}.{mes}.{dia}-{build}` (ej. `v2026.04.01-1`).
 
 ### Generar Hash para /version
 ```powershell

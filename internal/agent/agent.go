@@ -12,16 +12,25 @@ import (
 	"github.com/spf13/viper"
 )
 
-type Agent struct {
-	config *Config
-	comm   *communicator.Communicator
+type agentComm interface {
+	PollCommands() ([]models.Command, error)
+	ReportResult(models.Result) error
+	SendInventory(*models.Inventory) error
+	Heartbeat() error
 }
 
-const (
-	OrgID       = "ebefd607-bd17-4a3f-aa01-4d1a28948ef5"
-	ColAgentsID = "d0f075e6-65d2-4f13-935c-e4d7a3dce261"
-	ColAPIID    = "056e9be8-69ac-4e5e-95a8-bcbf803824a3"
-)
+type Agent struct {
+	config *Config
+	comm   agentComm
+}
+
+func (a *Agent) sendHeartbeat() {
+	if err := a.comm.Heartbeat(); err != nil {
+		log.Printf("Heartbeat error: %v", err)
+	}
+}
+
+const maxConcurrentCommands = 5
 
 func New(cfg *Config) *Agent {
 	if cfg.AgentToken == "" || cfg.AgentID == "" {
@@ -41,8 +50,8 @@ func New(cfg *Config) *Agent {
 			err := vc.StoreSecret(
 				"AGENT_TOKEN_"+resp.ID,
 				resp.Token,
-				OrgID,
-				ColAgentsID,
+				cfg.VaultOrgID,
+				cfg.VaultColAgents,
 			)
 			if err != nil {
 				log.Printf("StoreSecret error: %v", err)
@@ -99,6 +108,9 @@ func (a *Agent) Run() {
 	// Inventory al arrancar
 	go a.collectAndSendInventory()
 
+	// Heartbeat inmediato al arrancar
+	go a.sendHeartbeat()
+
 	// Ticker para poll de comandos
 	pollTicker := time.NewTicker(time.Duration(a.config.PollInterval) * time.Second)
 	defer pollTicker.Stop()
@@ -107,12 +119,22 @@ func (a *Agent) Run() {
 	inventoryTicker := time.NewTicker(24 * time.Hour)
 	defer inventoryTicker.Stop()
 
+	// Ticker para heartbeat — configurable, default 5 minutos
+	hbInterval := a.config.HeartbeatInterval
+	if hbInterval <= 0 {
+		hbInterval = 300 // 5 minutes default
+	}
+	heartbeatTicker := time.NewTicker(time.Duration(hbInterval) * time.Second)
+	defer heartbeatTicker.Stop()
+
 	for {
 		select {
 		case <-pollTicker.C:
 			a.tick()
 		case <-inventoryTicker.C:
 			go a.collectAndSendInventory()
+		case <-heartbeatTicker.C:
+			go a.sendHeartbeat()
 		}
 	}
 }
@@ -130,9 +152,12 @@ func (a *Agent) tick() {
 
 	log.Printf("%d command(s) recieved", len(commands))
 
+	sem := make(chan struct{}, maxConcurrentCommands)
 	for _, cmd := range commands {
 		cmdCopy := cmd
+		sem <- struct{}{}
 		go func() {
+			defer func() { <-sem }()
 			a.executeCommand(cmdCopy)
 		}()
 	}

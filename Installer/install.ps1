@@ -1,23 +1,26 @@
 ﻿# SentinelEdge Agent - Installer
 # Run as Administrator
 #
-# USAGE:
-#   .\install.ps1 -VaultClientSecret "your-secret-here"
-#
-# The VaultClientSecret is required and must NOT be hardcoded here.
-# Obtain it from the Vaultwarden admin UI or from the IT team secrets store.
-# NEVER commit this script with a real secret value.
+# Uso: .\install.ps1 -APIKey "key-obtenida-de-vaultwarden" -VaultClientSecret "your-secret-here"
+# El APIKey se obtiene de Vaultwarden: vault "AGENT_APIKEY" en la colección API
+# El VaultClientSecret es requerido y NO debe estar hardcodeado aquí.
+# Obtenlo del admin UI de Vaultwarden o del almacén de secretos del equipo IT.
+# NUNCA commitees este script con un valor real de secret.
 
 param(
     [Parameter(Mandatory = $true)]
-    [string]$VaultClientSecret
+    [string]$APIKey,
+
+    [Parameter(Mandatory = $true)]
+    [string]$VaultClientSecret,
+
+    [string]$ServerURL     = "https://saapi.ardepa.site",
+    [string]$TenantID      = "tenant-sentineledge",
+    [string]$VaultURL      = "https://pwd.ardepa.site",
+    [string]$VaultClientID = "user.f50ad073-3d5a-4bdd-8ce7-a4fed752c1e8"
 )
 
 $InstallDir        = "C:\Program Files\SentinelEdge"
-$ServerURL         = "https://saapi.ardepa.site"
-$TenantID          = "tenant-sentineledge"
-$VaultURL          = "https://pwd.ardepa.site"
-$VaultClientID     = "user.f50ad073-3d5a-4bdd-8ce7-a4fed752c1e8"
 
 Write-Host ""
 Write-Host "======================================" -ForegroundColor Cyan
@@ -50,6 +53,7 @@ Write-Host "Writing configuration..." -ForegroundColor White
 @"
 ServerURL: "$ServerURL"
 TenantID: "$TenantID"
+APIKey: "$APIKey"
 VaultURL: "$VaultURL"
 VaultClientID: "$VaultClientID"
 VaultClientSecret: "$VaultClientSecret"

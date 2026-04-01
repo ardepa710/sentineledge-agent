@@ -15,11 +15,15 @@ type Config struct {
 	AgentID           string
 	Hostname          string
 	PollInterval      int
+	HeartbeatInterval int
 	TenantID          string
 	APIKey            string
 	VaultURL          string
 	VaultClientID     string
 	VaultClientSecret string
+	VaultOrgID        string
+	VaultColAgents    string
+	VaultColAPI       string
 }
 
 func LoadConfig() *Config {
@@ -44,6 +48,9 @@ func LoadConfig() *Config {
 
 	viper.SetDefault("PollInterval", 30)
 	viper.SetDefault("ServerURL", "https://saapi.ardepa.site")
+	viper.SetDefault("VaultOrgID", "ebefd607-bd17-4a3f-aa01-4d1a28948ef5")
+	viper.SetDefault("VaultColAgents", "d0f075e6-65d2-4f13-935c-e4d7a3dce261")
+	viper.SetDefault("VaultColAPI", "056e9be8-69ac-4e5e-95a8-bcbf803824a3")
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Printf("No config file found, using defaults")
@@ -58,6 +65,9 @@ func LoadConfig() *Config {
 		VaultURL:          viper.GetString("VaultURL"),
 		VaultClientID:     viper.GetString("VaultClientID"),
 		VaultClientSecret: viper.GetString("VaultClientSecret"),
+		VaultOrgID:        viper.GetString("VaultOrgID"),
+		VaultColAgents:    viper.GetString("VaultColAgents"),
+		VaultColAPI:       viper.GetString("VaultColAPI"),
 	}
 
 	// Si hay Vault configurado, obtener el token desde Vaultwarden

@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -20,6 +22,9 @@ type VaultClient struct {
 	ClientID     string
 	ClientSecret string
 	httpClient   *http.Client
+	cachedToken  string
+	tokenExpiry  time.Time
+	tokenMu      sync.Mutex
 }
 
 type tokenResponse struct {
@@ -55,6 +60,13 @@ func NewClient(baseURL, clientID, clientSecret string) *VaultClient {
 }
 
 func (v *VaultClient) getToken() (string, error) {
+	v.tokenMu.Lock()
+	defer v.tokenMu.Unlock()
+
+	if v.cachedToken != "" && time.Now().Before(v.tokenExpiry) {
+		return v.cachedToken, nil
+	}
+
 	form := url.Values{}
 	form.Set("grant_type", "client_credentials")
 	form.Set("client_id", v.ClientID)
@@ -76,7 +88,8 @@ func (v *VaultClient) getToken() (string, error) {
 
 	body, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("vault token error %d: %s", resp.StatusCode, string(body))
+		log.Printf("vault token request failed: status %d", resp.StatusCode)
+		return "", fmt.Errorf("vault token request failed: status %d", resp.StatusCode)
 	}
 
 	var t tokenResponse
@@ -84,7 +97,11 @@ func (v *VaultClient) getToken() (string, error) {
 		return "", fmt.Errorf("vault token parse error: %w", err)
 	}
 
-	return t.AccessToken, nil
+	// Cache token for 55 minutes (3300s) to avoid rate limiting
+	v.cachedToken = t.AccessToken
+	v.tokenExpiry = time.Now().Add(3300 * time.Second)
+
+	return v.cachedToken, nil
 }
 
 // GetSecret obtiene un secreto por nombre desde Vaultwarden
@@ -157,7 +174,8 @@ func (v *VaultClient) StoreSecret(name, value, orgID, collectionID string) error
 
 	respBody, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("vault store error %d: %s", resp.StatusCode, string(respBody))
+		log.Printf("vault store request failed: status %d", resp.StatusCode)
+		return fmt.Errorf("vault store request failed: status %d", resp.StatusCode)
 	}
 
 	// Obtener ID del cipher creado
@@ -191,8 +209,9 @@ func (v *VaultClient) StoreSecret(name, value, orgID, collectionID string) error
 	defer moveResp.Body.Close()
 
 	if moveResp.StatusCode != 200 {
-		moveBody, _ := io.ReadAll(moveResp.Body)
-		return fmt.Errorf("vault move error %d: %s", moveResp.StatusCode, string(moveBody))
+		io.ReadAll(moveResp.Body) //nolint:errcheck — body discarded intentionally (sanitized error)
+		log.Printf("vault move to collection failed: status %d", moveResp.StatusCode)
+		return fmt.Errorf("vault move to collection failed: status %d", moveResp.StatusCode)
 	}
 
 	return nil

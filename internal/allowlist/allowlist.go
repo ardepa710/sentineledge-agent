@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
 )
 
 // approvedTypes lists command types that have fixed, hardcoded behavior in the executor.
@@ -80,7 +81,12 @@ var approvedPatterns = []*regexp.Regexp{
 //
 // Hashes are populated at agent startup via RegisterApprovedScript().
 // The registry is intentionally empty by default — operators must explicitly register scripts.
-var approvedHashes = map[string]string{}
+//
+// approvedHashesMu protects concurrent access to approvedHashes (FINDING-03).
+var (
+	approvedHashes   = map[string]string{}
+	approvedHashesMu sync.RWMutex
+)
 
 // ErrCommandRejected is returned when a command does not match the allowlist.
 type ErrCommandRejected struct {
@@ -111,7 +117,10 @@ func Validate(cmdType, payload string) error {
 
 		// Layer 1: SHA256 hash registry (pre-approved complex scripts).
 		hash := hashString(trimmed)
-		if desc, ok := approvedHashes[hash]; ok {
+		approvedHashesMu.RLock()
+		desc, ok := approvedHashes[hash]
+		approvedHashesMu.RUnlock()
+		if ok {
 			_ = desc // hash matched; description is for audit logging only
 			return nil
 		}
@@ -151,6 +160,8 @@ func Validate(cmdType, payload string) error {
 //	)
 func RegisterApprovedScript(payload, description string) {
 	hash := hashString(strings.TrimSpace(payload))
+	approvedHashesMu.Lock()
+	defer approvedHashesMu.Unlock()
 	approvedHashes[hash] = description
 }
 

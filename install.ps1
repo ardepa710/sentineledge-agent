@@ -1,10 +1,20 @@
 ﻿# SentinelEdge Agent - Installer
 # Run as Administrator
+#
+# Uso: .\install.ps1 -APIKey "key-obtenida-de-vaultwarden"
+# El APIKey se obtiene de Vaultwarden: vault "AGENT_APIKEY" en la colección API
+
+param(
+    [Parameter(Mandatory=$true)]
+    [string]$APIKey,
+
+    [string]$ServerURL    = "https://saapi.ardepa.site",
+    [string]$TenantID     = "tenant-sentineledge",
+    [string]$VaultURL     = "https://pwd.ardepa.site",
+    [string]$VaultClientID = "user.f50ad073-3d5a-4bdd-8ce7-a4fed752c1e8"
+)
 
 $InstallDir = "C:\Program Files\SentinelEdge"
-$ServerURL  = "https://saapi.ardepa.site"
-$TenantID   = "tenant-sentineledge"
-$APIKey     = "your-production-api-key"
 
 Write-Host ""
 Write-Host "======================================" -ForegroundColor Cyan

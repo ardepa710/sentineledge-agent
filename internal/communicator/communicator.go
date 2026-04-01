@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/sentineledge/agent/internal/version"
 	"github.com/sentineledge/agent/pkg/models"
 )
 
@@ -54,7 +55,7 @@ func Register(serverURL, tenantID, apiKey string) (*RegisterResponse, error) {
 	req := RegisterRequest{
 		Hostname: hostname,
 		OS:       runtime.GOOS,
-		Version:  "0.1.0",
+		Version:  version.Version,
 		TenantID: tenantID,
 		APIKey:   apiKey,
 	}
@@ -116,9 +117,15 @@ func (c *Communicator) ReportResult(result models.Result) error {
 
 // Heartbeat le dice al servidor que el agente sigue vivo
 func (c *Communicator) Heartbeat() error {
-	_, err := c.client.R().
+	resp, err := c.client.R().
 		Post(fmt.Sprintf("/agents/%s/heartbeat", c.agentID))
-	return err
+	if err != nil {
+		return fmt.Errorf("heartbeat request failed: %w", err)
+	}
+	if resp.StatusCode() != 200 {
+		return fmt.Errorf("heartbeat rejected by server: status %d", resp.StatusCode())
+	}
+	return nil
 }
 
 // SendInventory envía el inventario del agente al servidor
