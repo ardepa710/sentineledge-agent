@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SentinelEdge Agent — RMM Competitive Analysis 2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0d1117;
+    --bg-card: #161b22;
+    --bg-code: #0d1117;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --text-dim: #6e7681;
+    --accent: #58a6ff;
+    --accent-green: #3fb950;
+    --accent-yellow: #d29922;
+    --accent-red: #f85149;
+    --accent-purple: #bc8cff;
+    --accent-orange: #ffa657;
+    --gradient: linear-gradient(135deg, #1e3a5f 0%, #0d1f3c 50%, #130a1e 100%);
+  }
+
+  html { font-size: 10.5pt; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0;
+  }
+
+  /* ── COVER PAGE ─────────────────────────────── */
+  .cover {
+    min-height: 100vh;
+    background: var(--gradient);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 64px 72px;
+    page-break-after: always;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(88,166,255,0.08) 0%, transparent 70%);
+  }
+
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -150px; left: -150px;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(188,140,255,0.06) 0%, transparent 70%);
+  }
+
+  .cover-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(88,166,255,0.15);
+    border: 1px solid rgba(88,166,255,0.3);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 9pt;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    width: fit-content;
+  }
+
+  .cover-main { position: relative; z-index: 1; margin-top: 48px; }
+
+  .cover-logo {
+    font-size: 11pt;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .cover-logo::before {
+    content: '▲';
+    font-size: 14pt;
+  }
+
+  .cover h1 {
+    font-size: 36pt;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--text);
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+  }
+
+  .cover h1 span { color: var(--accent); }
+
+  .cover-sub {
+    font-size: 14pt;
+    color: var(--text-muted);
+    font-weight: 300;
+    margin-bottom: 48px;
+  }
+
+  .cover-divider {
+    width: 64px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-purple));
+    border-radius: 2px;
+    margin-bottom: 48px;
+  }
+
+  .cover-meta {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 24px;
+  }
+
+  .cover-meta-item {
+    border-left: 2px solid var(--border);
+    padding-left: 16px;
+  }
+
+  .cover-meta-item .label {
+    font-size: 8pt;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+
+  .cover-meta-item .value {
+    font-size: 10pt;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .cover-footer {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 32px;
+    border-top: 1px solid rgba(48,54,61,0.5);
+  }
+
+  .cover-footer-left { font-size: 9pt; color: var(--text-dim); }
+  .cover-footer-right {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8pt;
+    color: var(--text-dim);
+  }
+
+  /* ── TOC ──────────────────────────────────────── */
+  .toc-page {
+    padding: 64px 72px;
+    page-break-after: always;
+  }
+
+  .section-eyebrow {
+    font-size: 8pt;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  h2.section-title {
+    font-size: 22pt;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 32px;
+    letter-spacing: -0.01em;
+  }
+
+  .toc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .toc-item:last-child { border-bottom: none; }
+
+  .toc-item .toc-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5pt;
+    color: var(--accent);
+    min-width: 24px;
+    margin-right: 16px;
+  }
+
+  .toc-item .toc-title {
+    flex: 1;
+    font-size: 10pt;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .toc-item .toc-sub {
+    font-size: 9pt;
+    color: var(--text-muted);
+    margin-left: 24px;
+    flex: 1;
+  }
+
+  /* ── CONTENT PAGES ───────────────────────────── */
+  .page {
+    padding: 56px 72px;
+    page-break-after: always;
+  }
+
+  .page:last-child { page-break-after: avoid; }
+
+  h3 {
+    font-size: 16pt;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 20px;
+    margin-top: 36px;
+    letter-spacing: -0.01em;
+  }
+
+  h3:first-child { margin-top: 0; }
+
+  h4 {
+    font-size: 11.5pt;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 10px;
+    margin-top: 24px;
+  }
+
+  p {
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    font-size: 10pt;
+  }
+
+  /* ── COMPETITOR CARD ──────────────────────────── */
+  .competitor-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .competitor-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--card-accent, var(--accent));
+    border-radius: 12px 12px 0 0;
+  }
+
+  .competitor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+
+  .competitor-name {
+    font-size: 14pt;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .competitor-tagline {
+    font-size: 9pt;
+    color: var(--text-dim);
+  }
+
+  .competitor-badge {
+    background: rgba(88,166,255,0.1);
+    border: 1px solid rgba(88,166,255,0.2);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 8pt;
+    font-weight: 600;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .feature-tag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 9pt;
+    color: var(--text-muted);
+    padding: 5px 0;
+  }
+
+  .feature-tag::before {
+    content: '◆';
+    font-size: 6pt;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  /* ── GAP TABLE ──────────────────────────────── */
+  .gap-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 32px;
+    font-size: 9.5pt;
+  }
+
+  .gap-table thead tr {
+    background: rgba(88,166,255,0.08);
+    border-bottom: 2px solid rgba(88,166,255,0.3);
+  }
+
+  .gap-table th {
+    text-align: left;
+    padding: 12px 16px;
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .gap-table td {
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    color: var(--text-muted);
+  }
+
+  .gap-table tr:last-child td { border-bottom: none; }
+
+  .gap-table tr:hover td { background: rgba(88,166,255,0.03); }
+
+  .gap-table .feature-name {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 10pt;
+  }
+
+  /* ── PRIORITY BADGES ──────────────────────────── */
+  .priority {
+    display: inline-block;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .priority-critical { background: rgba(248,81,73,0.15); color: var(--accent-red); border: 1px solid rgba(248,81,73,0.3); }
+  .priority-high { background: rgba(255,166,87,0.12); color: var(--accent-orange); border: 1px solid rgba(255,166,87,0.25); }
+  .priority-medium { background: rgba(210,153,34,0.12); color: var(--accent-yellow); border: 1px solid rgba(210,153,34,0.25); }
+  .priority-low { background: rgba(63,185,80,0.1); color: var(--accent-green); border: 1px solid rgba(63,185,80,0.2); }
+
+  /* ── IMPLEMENTATION CARDS ─────────────────────── */
+  .impl-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    break-inside: avoid;
+  }
+
+  .impl-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .impl-title {
+    font-size: 12pt;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .impl-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .impl-tag {
+    background: rgba(48,54,61,0.6);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8pt;
+    color: var(--text-dim);
+  }
+
+  .impl-desc {
+    color: var(--text-muted);
+    font-size: 9.5pt;
+    margin-bottom: 12px;
+    line-height: 1.65;
+  }
+
+  .impl-section-label {
+    font-size: 8pt;
+    font-weight: 700;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+    margin-top: 14px;
+  }
+
+  .impl-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .impl-list li {
+    font-size: 9.5pt;
+    color: var(--text-muted);
+    padding: 4px 0 4px 20px;
+    position: relative;
+    line-height: 1.55;
+  }
+
+  .impl-list li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-size: 9pt;
+  }
+
+  /* ── CODE BLOCK ───────────────────────────────── */
+  .code-block {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 12px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5pt;
+    color: #79c0ff;
+    line-height: 1.6;
+    overflow: hidden;
+  }
+
+  .code-block .comment { color: var(--text-dim); }
+  .code-block .keyword { color: #ff7b72; }
+  .code-block .string { color: #a5d6ff; }
+  .code-block .type { color: #79c0ff; }
+  .code-block .func { color: #d2a8ff; }
+
+  /* ── CALLOUT ─────────────────────────────────── */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: rgba(88,166,255,0.06);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin: 16px 0;
+  }
+
+  .callout.warning { border-color: var(--accent-orange); background: rgba(255,166,87,0.06); }
+  .callout.success { border-color: var(--accent-green); background: rgba(63,185,80,0.06); }
+
+  .callout-title {
+    font-size: 9pt;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+
+  .callout.warning .callout-title { color: var(--accent-orange); }
+  .callout.success .callout-title { color: var(--accent-green); }
+
+  .callout p { margin-bottom: 0; font-size: 9.5pt; }
+
+  /* ── COMPARISON MATRIX ─────────────────────── */
+  .matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.5pt;
+    margin-bottom: 24px;
+  }
+
+  .matrix-table th {
+    background: rgba(22,27,34,0.8);
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    text-align: center;
+    font-weight: 600;
+    color: var(--text);
+    font-size: 8pt;
+  }
+
+  .matrix-table th:first-child { text-align: left; min-width: 160px; }
+
+  .matrix-table td {
+    border: 1px solid var(--border);
+    padding: 9px 12px;
+    text-align: center;
+    color: var(--text-muted);
+    vertical-align: middle;
+  }
+
+  .matrix-table td:first-child {
+    text-align: left;
+    font-weight: 500;
+    color: var(--text);
+    font-size: 9pt;
+  }
+
+  .matrix-table tr:nth-child(even) td { background: rgba(22,27,34,0.4); }
+
+  .check-yes { color: var(--accent-green); font-size: 12pt; font-weight: 700; }
+  .check-partial { color: var(--accent-yellow); font-size: 11pt; }
+  .check-no { color: rgba(139,148,158,0.3); font-size: 11pt; }
+  .check-we { background: rgba(88,166,255,0.1); border-radius: 3px; padding: 1px 4px; }
+
+  /* ── ROADMAP TIMELINE ─────────────────────────── */
+  .timeline {
+    position: relative;
+    padding-left: 32px;
+    margin: 24px 0;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: linear-gradient(180deg, var(--accent) 0%, var(--accent-purple) 100%);
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 28px;
+    break-inside: avoid;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -26px;
+    top: 6px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+  }
+
+  .timeline-phase {
+    font-size: 8pt;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+
+  .timeline-title {
+    font-size: 11pt;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .timeline-desc {
+    font-size: 9.5pt;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  /* ── STATS ROW ─────────────────────────────────── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin: 28px 0;
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 18px;
+    text-align: center;
+  }
+
+  .stat-number {
+    font-size: 24pt;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .stat-label {
+    font-size: 8.5pt;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── PAGE HEADER ──────────────────────────────── */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .page-header-title {
+    font-size: 8.5pt;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .page-header-logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8pt;
+    color: var(--text-dim);
+  }
+
+  /* ── SECTION DIVIDER ─────────────────────────── */
+  .section-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 32px 0;
+  }
+
+  /* ── PRINT ────────────────────────────────────── */
+  @media print {
+    body { background: #0d1117; }
+    .page { page-break-after: always; }
+    .cover { page-break-after: always; }
+    .toc-page { page-break-after: always; }
+    .impl-card { break-inside: avoid; }
+    .competitor-card { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ COVER ═══════════════════ -->
+<div class="cover">
+  <div>
+    <div class="cover-badge">Confidential · Internal Document</div>
+  </div>
+
+  <div class="cover-main">
+    <div class="cover-logo">SentinelEdge</div>
+    <h1>RMM Agent<br><span>Competitive Analysis</span><br>&amp; Feature Gap Report</h1>
+    <div class="cover-sub">Strategic comparison against industry-leading platforms<br>with prioritized implementation roadmap</div>
+    <div class="cover-divider"></div>
+    <div class="cover-meta">
+      <div class="cover-meta-item">
+        <div class="label">Prepared by</div>
+        <div class="value">SentinelEdge Team</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="label">Date</div>
+        <div class="value">April 2, 2026</div>
+      </div>
+      <div class="cover-meta-item">
+        <div class="label">Version</div>
+        <div class="value">1.0 — Initial Release</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cover-footer">
+    <div class="cover-footer-left">SentinelEdge Agent · MSP Infrastructure Division</div>
+    <div class="cover-footer-right">docs/competitive-analysis/2026-04-02</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ TOC ═══════════════════ -->
+<div class="toc-page">
+  <div class="page-header">
+    <span class="page-header-title">Table of Contents</span>
+    <span class="page-header-logo">SentinelEdge · 2026</span>
+  </div>
+  <div class="section-eyebrow">Navigation</div>
+  <h2 class="section-title">Contents</h2>
+
+  <div class="toc-item">
+    <span class="toc-num">01</span>
+    <span class="toc-title">Executive Summary</span>
+  </div>
+  <div class="toc-item">
+    <span class="toc-num">02</span>
+    <span class="toc-title">SentinelEdge Current State</span>
+    <span class="toc-sub">Architecture, capabilities, and current feature set</span>
+  </div>
+  <div class="toc-item">
+    <span class="toc-num">03</span>
+    <span class="toc-title">Competitor Profiles</span>
+    <span class="toc-sub">NinjaOne, Datto RMM, N-able, Atera, Kaseya VSA, ConnectWise, Pulseway</span>
+  </div>
+  <div class="toc-item">
+    <span class="toc-num">04</span>
+    <span class="toc-title">Feature Comparison Matrix</span>
+    <span class="toc-sub">Side-by-side capability comparison across 25 feature areas</span>
+  </div>
+  <div class="toc-item">
+    <span class="toc-num">05</span>
+    <span class="toc-title">Gap Analysis</span>
+    <span class="toc-sub">Critical missing features with business impact assessment</span>
+  </div>
+  <div class="toc-item">
+    <span class="toc-num">06</span>
+    <span class="toc-title">Implementation Proposals</span>
+    <span class="toc-sub">14 feature implementation blueprints with technical specifications</span>
+  </div>
+  <div class="toc-item">
+    <span class="toc-num">07</span>
+    <span class="toc-title">Prioritized Roadmap</span>
+    <span class="toc-sub">Phased implementation timeline (Phase 1–4)</span>
+  </div>
+  <div class="toc-item">
+    <span class="toc-num">08</span>
+    <span class="toc-title">Conclusions</span>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 1: EXECUTIVE SUMMARY ═══════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-header-title">01 · Executive Summary</span>
+    <span class="page-header-logo">SentinelEdge · 2026</span>
+  </div>
+
+  <div class="section-eyebrow">Overview</div>
+  <h3>Executive Summary</h3>
+
+  <p>This document presents a comprehensive competitive analysis of SentinelEdge Agent against the leading Remote Monitoring and Management (RMM) platforms in the MSP market as of Q1 2026. The analysis covers NinjaOne, Datto RMM (Kaseya), N-able N-central, Atera, Kaseya VSA, ConnectWise Automate/RMM, and Pulseway.</p>
+
+  <p>SentinelEdge Agent has built a solid technical foundation: a lightweight Go-based Windows Service with Vaultwarden-secured credentials, deny-by-default command allowlisting, automatic heartbeat/polling, hardware inventory collection, and GitHub Releases-based auto-update. However, the current feature set covers only a fraction of what enterprise MSP agents deliver.</p>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-number">7</div>
+      <div class="stat-label">Competitors Analyzed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">25</div>
+      <div class="stat-label">Feature Areas Assessed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">14</div>
+      <div class="stat-label">Implementation Proposals</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">4</div>
+      <div class="stat-label">Roadmap Phases</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">Strategic Finding</div>
+    <p>The most critical gaps are <strong style="color: var(--text)">real-time threshold alerting</strong>, <strong style="color: var(--text)">patch management automation</strong>, <strong style="color: var(--text)">Windows Event Log monitoring</strong>, and <strong style="color: var(--text)">interactive remote terminal access</strong>. These four capabilities are universally present in all seven competitors and represent the baseline for any commercially viable RMM agent in 2026.</p>
+  </div>
+
+  <h4>Key Differentiators Competitors Hold</h4>
+  <p>Beyond the baseline gaps, competitors are actively investing in AI-powered autonomous remediation (Atera's Robin, ConnectWise AI scripting), hyperscale patch coverage (ConnectWise: 7,000+ apps, NinjaOne: 200+ third-party), mobile-first management (Pulseway), native Microsoft 365 management (Datto RMM), and deep EDR/security integration. These represent the next generation of differentiation for SentinelEdge.</p>
+</div>
+
+<!-- ═══════════════════ PAGE 2: CURRENT STATE ═══════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-header-title">02 · SentinelEdge Current State</span>
+    <span class="page-header-logo">SentinelEdge · 2026</span>
+  </div>
+
+  <div class="section-eyebrow">Our Foundation</div>
+  <h3>What SentinelEdge Agent Has Today</h3>
+
+  <p>The agent is written in Go 1.21+, targeting Windows amd64, and installed as a native Windows Service via <code style="font-family: JetBrains Mono; font-size: 9pt; color: var(--accent-purple)">github.com/kardianos/service</code>. It communicates with the SentinelEdge API (<code style="font-family: JetBrains Mono; font-size: 9pt; color: var(--accent-purple)">saapi.ardepa.site</code>) using authenticated HTTP via resty/v2.</p>
+
+  <div class="competitor-card" style="--card-accent: #3fb950;">
+    <div class="competitor-header">
+      <div>
+        <div class="competitor-name">Current Feature Set</div>
+        <div class="competitor-tagline">Capabilities available in the current agent build</div>
+      </div>
+      <div class="competitor-badge" style="background: rgba(63,185,80,0.1); border-color: rgba(63,185,80,0.3); color: var(--accent-green);">Implemented ✓</div>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-tag">Windows Service lifecycle (Start/Stop/Run)</div>
+      <div class="feature-tag">YAML configuration via Viper (env var overrides)</div>
+      <div class="feature-tag">Vaultwarden OAuth2 secrets management</div>
+      <div class="feature-tag">Agent self-registration with API token storage</div>
+      <div class="feature-tag">Heartbeat every 300s (configurable)</div>
+      <div class="feature-tag">Poll-based command queue (every 30s)</div>
+      <div class="feature-tag">PowerShell command execution (deny-by-default allowlist)</div>
+      <div class="feature-tag">SHA256 hash + regex command allowlist with RWMutex</div>
+      <div class="feature-tag">Max 5 concurrent commands (semaphore)</div>
+      <div class="feature-tag">Hardware inventory via WMI/PowerShell (24h cycle)</div>
+      <div class="feature-tag">Software inventory (Windows Registry)</div>
+      <div class="feature-tag">Auto-update from GitHub Releases (SHA256 verified)</div>
+      <div class="feature-tag">Download URL allowlist enforcement</div>
+      <div class="feature-tag">Multi-tenant TenantID in all API requests</div>
+      <div class="feature-tag">Bearer token auth on all requests</div>
+      <div class="feature-tag">Build-time version injection via ldflags</div>
+    </div>
+  </div>
+
+  <div class="callout warning">
+    <div class="callout-title">Security Debt (from Audit 2026-04-01)</div>
+    <p>Two known security items remain open: <strong style="color: var(--text)">F-01 CRITICAL</strong> — TLS certificate pinning not implemented (requires pin distribution infrastructure); <strong style="color: var(--text)">F-05 MEDIUM</strong> — No nonce/timestamp on commands (replay attack vector). Additionally, <code style="font-family: JetBrains Mono; font-size: 8.5pt;">Agent.token</code> is stored in plaintext in Supabase (API-side issue).</p>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 3: COMPETITORS ═══════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-header-title">03 · Competitor Profiles</span>
+    <span class="page-header-logo">SentinelEdge · 2026</span>
+  </div>
+
+  <div class="section-eyebrow">Market Landscape</div>
+  <h3>Competitor Profiles</h3>
+
+  <div class="competitor-card" style="--card-accent: #58a6ff;">
+    <div class="competitor-header">
+      <div>
+        <div class="competitor-name">NinjaOne (NinjaRMM)</div>
+        <div class="competitor-tagline">Gartner Magic Quadrant Leader 2026 · 23 quarters as #1 RMM on G2</div>
+      </div>
+      <div class="competitor-badge">Enterprise Leader</div>
+    </div>
+    <p style="font-size: 9.5pt; margin-bottom: 14px;">The dominant player. Known for fast time-to-value, cross-platform support (Windows, Mac, Linux, VMware, SNMP), and a clean UI. Offers 200+ third-party app patches, five scripting languages, and deep remote access integration.</p>
+    <div class="feature-grid">
+      <div class="feature-tag">Patch Management (OS + 200+ third-party apps)</div>
+      <div class="feature-tag">5 scripting languages (PS, JS, Bash, VBScript, Batch)</div>
+      <div class="feature-tag">Role-Based Access Control (RBAC)</div>
+      <div class="feature-tag">Managed Antivirus (AV) + EDR integration</div>
+      <div class="feature-tag">Remote terminal + remote desktop</div>
+      <div class="feature-tag">Network device monitoring (SNMP)</div>
+      <div class="feature-tag">Windows / Mac / Linux / VMware agents</div>
+      <div class="feature-tag">Real-time threshold alerting</div>
+      <div class="feature-tag">Device approval workflow</div>
+      <div class="feature-tag">Password vault management</div>
+      <div class="feature-tag">Backup integration (NinjaBackup)</div>
+      <div class="feature-tag">MDM for iOS/Android</div>
+    </div>
+  </div>
+
+  <div class="competitor-card" style="--card-accent: #ffa657;">
+    <div class="competitor-header">
+      <div>
+        <div class="competitor-name">Datto RMM</div>
+        <div class="competitor-tagline">Now part of Kaseya · Unique: native Microsoft 365 management module</div>
+      </div>
+      <div class="competitor-badge" style="background: rgba(255,166,87,0.1); border-color: rgba(255,166,87,0.3); color: var(--accent-orange);">MSP Focused</div>
+    </div>
+    <p style="font-size: 9.5pt; margin-bottom: 14px;">The only RMM with a native M365 management module. Emphasizes security-first design with native ransomware detection, mandatory 2FA, and agent encryption. Strong automation policies engine.</p>
+    <div class="feature-grid">
+      <div class="feature-tag">Native ransomware detection</div>
+      <div class="feature-tag">Microsoft 365 management (native module)</div>
+      <div class="feature-tag">Automation Policies (pre-defined workflows)</div>
+      <div class="feature-tag">Mandatory 2FA enforcement</div>
+      <div class="feature-tag">PowerShell + Bash + Python scripting</div>
+      <div class="feature-tag">Remote desktop control</div>
+      <div class="feature-tag">Patch management + vulnerability scanning</div>
+      <div class="feature-tag">Network discovery (ESXi monitoring)</div>
+      <div class="feature-tag">ComStore (script/component library)</div>
+      <div class="feature-tag">Monitoring templates (CPU/disk/network)</div>
+      <div class="feature-tag">Datto Backup integration</div>
+      <div class="feature-tag">SNMP network device monitoring</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 4: MORE COMPETITORS ═══════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-header-title">03 · Competitor Profiles (continued)</span>
+    <span class="page-header-logo">SentinelEdge · 2026</span>
+  </div>
+
+  <div class="competitor-card" style="--card-accent: #bc8cff;">
+    <div class="competitor-header">
+      <div>
+        <div class="competitor-name">N-able N-central</div>
+        <div class="competitor-tagline">650+ scripts · Advanced Linux agent (2026 roadmap) · NetPath diagnostics</div>
+      </div>
+      <div class="competitor-badge" style="background: rgba(188,140,255,0.1); border-color: rgba(188,140,255,0.3); color: var(--accent-purple);">Enterprise Scale</div>
+    </div>
+    <p style="font-size: 9.5pt; margin-bottom: 14px;">N-central is the flagship for large MSPs and enterprise IT. Ships with 650+ pre-built scripts, advanced patch management, network path diagnostics, and Cloud Commander for multi-tenant M365 management. 2026 roadmap includes an optimized Linux agent with log visibility and flexible deployment.</p>
+    <div class="feature-grid">
+      <div class="feature-tag">650+ pre-built automation scripts</div>
+      <div class="feature-tag">NetPath network diagnostics</div>
+      <div class="feature-tag">Cloud Commander (multi-tenant M365)</div>
+      <div class="feature-tag">SSH management for Cisco/Fortinet/HP/Juniper</div>
+      <div class="feature-tag">Advanced patch management</div>
+      <div class="feature-tag">EDR and AV add-ons</div>
+      <div class="feature-tag">Risk Intelligence module</div>
+      <div class="feature-tag">Automation Manager (drag-and-drop)</div>
+      <div class="feature-tag">Sensitive path control (Linux)</div>
+      <div class="feature-tag">5-minute detection check cycle</div>
+      <div class="feature-tag">Log visibility per endpoint</div>
+      <div class="feature-tag">Take Control (remote desktop)</div>
+    </div>
+  </div>
+
+  <div class="competitor-card" style="--card-accent: #3fb950;">
+    <div class="competitor-header">
+      <div>
+        <div class="competitor-name">Atera</div>
+        <div class="competitor-tagline">AI-native: Robin autonomous agent + AI Copilot · Per-technician pricing</div>
+      </div>
+      <div class="competitor-badge" style="background: rgba(63,185,80,0.1); border-color: rgba(63,185,80,0.3); color: var(--accent-green);">AI Pioneer</div>
+    </div>
+    <p style="font-size: 9.5pt; margin-bottom: 14px;">Atera is the most AI-forward RMM. <strong style="color: var(--text)">Robin</strong> (relaunched March 2026) autonomously resolves complex device, network, and cloud issues without technician intervention. The AI Copilot assists with script generation, ticket summaries, and remote session analysis. All-in-one platform with integrated PSA and billing.</p>
+    <div class="feature-grid">
+      <div class="feature-tag">Robin — autonomous AI agent (self-healing)</div>
+      <div class="feature-tag">AI Copilot (script gen, ticket summaries)</div>
+      <div class="feature-tag">Integrated PSA and billing</div>
+      <div class="feature-tag">Automated patch management</div>
+      <div class="feature-tag">Splashtop remote access integration</div>
+      <div class="feature-tag">Network discovery</div>
+      <div class="feature-tag">SNMP monitoring</div>
+      <div class="feature-tag">Real-time monitoring with threshold alerts</div>
+      <div class="feature-tag">AI-powered ticket routing</div>
+      <div class="feature-tag">Software deployment automation</div>
+      <div class="feature-tag">Multi-client dashboard</div>
+      <div class="feature-tag">Billing automation per device</div>
+    </div>
+  </div>
+
+  <div class="competitor-card" style="--card-accent: #f85149;">
+    <div class="competitor-header">
+      <div>
+        <div class="competitor-name">Kaseya VSA + ConnectWise Automate + Pulseway</div>
+        <div class="competitor-tagline">Additional major platforms completing the competitive landscape</div>
+      </div>
+      <div class="competitor-badge" style="background: rgba(248,81,73,0.1); border-color: rgba(248,81,73,0.3); color: var(--accent-red);">3 Platforms</div>
+    </div>
+    <p style="font-size: 9.5pt; margin-bottom: 14px;"><strong style="color: var(--text)">Kaseya VSA</strong>: Agent Procedures engine for complex workflows, vPro/AMT management, IT Glue integration, mobile VSA app. <strong style="color: var(--text)">ConnectWise Automate</strong>: Expanded from 350 to 7,000+ third-party patches (2025), AI-assisted PowerShell drafting, multi-machine simultaneous management, RPA capabilities. <strong style="color: var(--text)">Pulseway</strong>: Best-in-class mobile app, real-time push alerts, visual workflow builder for automation, MDM for iOS/Android — the only RMM with truly mobile-first management.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 5: MATRIX ═══════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-header-title">04 · Feature Comparison Matrix</span>
+    <span class="page-header-logo">SentinelEdge · 2026</span>
+  </div>
+
+  <div class="section-eyebrow">Side-by-Side Comparison</div>
+  <h3>Feature Comparison Matrix</h3>
+
+  <p style="margin-bottom: 20px; font-size: 9pt;">
+    <span class="check-yes">●</span> <span style="color: var(--text-muted)">Full support &nbsp;</span>
+    <span class="check-partial">◐</span> <span style="color: var(--text-muted)">Partial/Add-on &nbsp;</span>
+    <span style="color: rgba(139,148,158,0.3); font-size: 11pt;">○</span> <span style="color: var(--text-muted)">Not available &nbsp;</span>
+    <span style="background: rgba(88,166,255,0.15); border: 1px solid rgba(88,166,255,0.3); border-radius:3px; padding: 1px 6px; font-size:8.5pt; color: var(--accent);">SE</span> <span style="color: var(--text-muted)">SentinelEdge</span>
+  </p>
+
+  <table class="matrix-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th style="background: rgba(88,166,255,0.12);">SE</th>
+        <th>Ninja</th>
+        <th>Datto</th>
+        <th>N-able</th>
+        <th>Atera</th>
+        <th>Kaseya</th>
+        <th>CW</th>
+        <th>Pulseway</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Windows Service Agent</td>
+        <td class="check-yes check-we">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td>
+      </tr>
+      <tr>
+        <td>Hardware Inventory</td>
+        <td class="check-yes check-we">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td>
+      </tr>
+      <tr>
+        <td>Auto-Update Mechanism</td>
+        <td class="check-yes check-we">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td>
+      </tr>
+      <tr>
+        <td>PS/Script Execution</td>
+        <td class="check-yes check-we">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td>
+      </tr>
+      <tr>
+        <td>Secrets Management (Vault)</td>
+        <td class="check-yes check-we">●</td><td class="check-yes">●</td><td class="check-partial">◐</td><td class="check-partial">◐</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-partial">◐</td><td class="check-partial">◐</td>
+      </tr>
+      <tr>
+        <td>Command Allowlist</td>
+        <td class="check-yes check-we">●</td><td class="check-partial">◐</td><td class="check-partial">◐</td><td class="check-partial">◐</td><td class="check-partial">◐</td><td class="check-partial">◐</td><td class="check-partial">◐</td><td class="check-partial">◐</td>
+      </tr>
+      <tr>
+        <td><strong>Real-Time Threshold Alerting</strong></td>
+        <td style="color: rgba(139,148,158,0.3); font-size:11pt;" class="check-we">○</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td>
+      </tr>
+      <tr>
+        <td><strong>Patch Management</strong></td>
+        <td style="color: rgba(139,148,158,0.3); font-size:11pt;" class="check-we">○</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td>
+      </tr>
+      <tr>
+        <td><strong>Windows Event Log Monitor</strong></td>
+        <td style="color: rgba(139,148,158,0.3); font-size:11pt;" class="check-we">○</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td>
+      </tr>
+      <tr>
+        <td><strong>Remote Terminal/Shell</strong></td>
+        <td style="color: rgba(139,148,158,0.3); font-size:11pt;" class="check-we">○</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td>
+      </tr>
+      <tr>
+        <td>Service Monitoring (Win Services)</td>
+        <td style="color: rgba(139,148,158,0.3); font-size:11pt;" class="check-we">○</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td>
+      </tr>
+      <tr>
+        <td>Process Monitoring</td>
+        <td style="color: rgba(139,148,158,0.3); font-size:11pt;" class="check-we">○</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td>
+      </tr>
+      <tr>
+        <td>Software Deployment (MSI/EXE)</td>
+        <td style="color: rgba(139,148,158,0.3); font-size:11pt;" class="check-we">○</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td>
+      </tr>
+      <tr>
+        <td>File Transfer (push/pull)</td>
+        <td style="color: rgba(139,148,158,0.3); font-size:11pt;" class="check-we">○</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-partial">◐</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td>
+      </tr>
+      <tr>
+        <td>Vulnerability Scanning (CVE)</td>
+        <td style="color: rgba(139,148,158,0.3); font-size:11pt;" class="check-we">○</td><td class="check-partial">◐</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-partial">◐</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-partial">◐</td>
+      </tr>
+      <tr>
+        <td>Script/Task Library</td>
+        <td style="color: rgba(139,148,158,0.3); font-size:11pt;" class="check-we">○</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td>
+      </tr>
+      <tr>
+        <td>SNMP / Network Device Monitor</td>
+        <td style="color: rgba(139,148,158,0.3); font-size:11pt;" class="check-we">○</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-partial">◐</td>
+      </tr>
+      <tr>
+        <td>Policy-Based Configuration</td>
+        <td style="color: rgba(139,148,158,0.3); font-size:11pt;" class="check-we">○</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td>
+      </tr>
+      <tr>
+        <td>EDR / AV Integration</td>
+        <td style="color: rgba(139,148,158,0.3); font-size:11pt;" class="check-we">○</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-partial">◐</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-partial">◐</td>
+      </tr>
+      <tr>
+        <td>Ransomware Detection</td>
+        <td style="color: rgba(139,148,158,0.3); font-size:11pt;" class="check-we">○</td><td class="check-partial">◐</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-partial">◐</td><td class="check-yes">●</td><td class="check-partial">◐</td><td class="check-partial">◐</td>
+      </tr>
+      <tr>
+        <td>Linux Agent Support</td>
+        <td style="color: rgba(139,148,158,0.3); font-size:11pt;" class="check-we">○</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td>
+      </tr>
+      <tr>
+        <td>macOS Agent Support</td>
+        <td style="color: rgba(139,148,158,0.3); font-size:11pt;" class="check-we">○</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-yes">●</td>
+      </tr>
+      <tr>
+        <td>Mobile App (iOS/Android)</td>
+        <td style="color: rgba(139,148,158,0.3); font-size:11pt;" class="check-we">○</td><td class="check-partial">◐</td><td class="check-partial">◐</td><td class="check-partial">◐</td><td class="check-partial">◐</td><td class="check-yes">●</td><td class="check-partial">◐</td><td class="check-yes">●</td>
+      </tr>
+      <tr>
+        <td>AI Autonomous Remediation</td>
+        <td style="color: rgba(139,148,158,0.3); font-size:11pt;" class="check-we">○</td><td class="check-partial">◐</td><td class="check-partial">◐</td><td class="check-partial">◐</td><td class="check-yes">●</td><td class="check-partial">◐</td><td class="check-partial">◐</td><td class="check-partial">◐</td>
+      </tr>
+      <tr>
+        <td>Microsoft 365 Management</td>
+        <td style="color: rgba(139,148,158,0.3); font-size:11pt;" class="check-we">○</td><td class="check-partial">◐</td><td class="check-yes">●</td><td class="check-yes">●</td><td class="check-partial">◐</td><td class="check-partial">◐</td><td class="check-partial">◐</td><td class="check-partial">◐</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════ PAGE 6: GAP ANALYSIS ═══════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-header-title">05 · Gap Analysis</span>
+    <span class="page-header-logo">SentinelEdge · 2026</span>
+  </div>
+
+  <div class="section-eyebrow">Critical Missing Features</div>
+  <h3>Gap Analysis</h3>
+
+  <table class="gap-table">
+    <thead>
+      <tr>
+        <th style="width: 26%;">Feature Gap</th>
+        <th style="width: 12%;">Priority</th>
+        <th style="width: 22%;">Competitors With It</th>
+        <th>Business Impact</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><div class="feature-name">Real-Time Threshold Alerting</div>CPU/RAM/Disk/Network thresholds with configurable alert rules</td>
+        <td><span class="priority priority-critical">Critical</span></td>
+        <td>All 7 competitors</td>
+        <td>Without this, SentinelEdge is reactive (waiting for commands) instead of proactive. MSPs cannot onboard clients who expect automatic issue detection.</td>
+      </tr>
+      <tr>
+        <td><div class="feature-name">Patch Management</div>Automated OS + third-party app patching with approval workflow</td>
+        <td><span class="priority priority-critical">Critical</span></td>
+        <td>All 7 competitors</td>
+        <td>Patch management is the #1 RMM purchase driver for MSPs. Its absence makes SentinelEdge non-competitive as a standalone RMM product.</td>
+      </tr>
+      <tr>
+        <td><div class="feature-name">Windows Event Log Monitoring</div>Watch for critical event IDs, login failures, service crashes</td>
+        <td><span class="priority priority-critical">Critical</span></td>
+        <td>All 7 competitors</td>
+        <td>Security and compliance use cases require event log visibility. HIPAA, SOC2, and CMMC auditors specifically require log monitoring evidence.</td>
+      </tr>
+      <tr>
+        <td><div class="feature-name">Interactive Remote Terminal</div>Real-time bidirectional shell/PS session without script queuing</td>
+        <td><span class="priority priority-critical">Critical</span></td>
+        <td>All 7 competitors</td>
+        <td>The current poll-every-30s model adds 0–30s latency per command. Technicians cannot interactively diagnose or remediate issues in real time.</td>
+      </tr>
+      <tr>
+        <td><div class="feature-name">Windows Service Monitor</div>Watch named services; alert and auto-restart on failure</td>
+        <td><span class="priority priority-high">High</span></td>
+        <td>All 7 competitors</td>
+        <td>Production servers running critical services (SQL Server, IIS, backup agents) will have undetected downtime until next heartbeat or human report.</td>
+      </tr>
+      <tr>
+        <td><div class="feature-name">File Transfer (push/pull)</div>Upload scripts/configs to endpoint; pull log files from endpoint</td>
+        <td><span class="priority priority-high">High</span></td>
+        <td>All 7 competitors</td>
+        <td>Technicians must embed large scripts in command payloads. Log collection requires PowerShell that reads and base64-encodes files, creating security surface.</td>
+      </tr>
+      <tr>
+        <td><div class="feature-name">Software Deployment</div>Push MSI/EXE installers to endpoints from central library</td>
+        <td><span class="priority priority-high">High</span></td>
+        <td>All 7 competitors</td>
+        <td>Standard MSP use case: onboarding new devices, deploying security tools, standardizing software stacks across client environments.</td>
+      </tr>
+      <tr>
+        <td><div class="feature-name">Script/Task Library</div>Reusable script library with version control and scheduling</td>
+        <td><span class="priority priority-high">High</span></td>
+        <td>All 7 competitors</td>
+        <td>N-able ships with 650+ scripts; ConnectWise covers 7,000+ app patches. Without a library, SentinelEdge requires technicians to write everything from scratch.</td>
+      </tr>
+      <tr>
+        <td><div class="feature-name">Vulnerability Scanning (CVE)</div>Identify installed software with known CVEs; map to patches</td>
+        <td><span class="priority priority-medium">Medium</span></td>
+        <td>Datto, N-able, Kaseya, CW</td>
+        <td>Compliance reporting (SOC2/HIPAA/CMMC) requires documented vulnerability posture. MSPs selling security packages cannot demonstrate value without CVE tracking.</td>
+      </tr>
+      <tr>
+        <td><div class="feature-name">Policy-Based Configuration</div>Apply configuration profiles to groups of endpoints automatically</td>
+        <td><span class="priority priority-medium">Medium</span></td>
+        <td>All 7 competitors</td>
+        <td>Managing 500+ endpoints with manual per-device commands is operationally impossible. Policies enable standardization at scale.</td>
+      </tr>
+      <tr>
+        <td><div class="feature-name">Linux / macOS Agent</div>Non-Windows endpoint support</td>
+        <td><span class="priority priority-medium">Medium</span></td>
+        <td>All 7 competitors</td>
+        <td>MSP clients increasingly have mixed environments. A Windows-only agent covers only part of the endpoint estate.</td>
+      </tr>
+      <tr>
+        <td><div class="feature-name">Process Monitoring</div>Watch named processes; detect unexpected launches or terminations</td>
+        <td><span class="priority priority-medium">Medium</span></td>
+        <td>All 7 competitors</td>
+        <td>Security use case: detect unauthorized process execution (crypto miners, RATs). Operational: detect crashed application processes before users report them.</td>
+      </tr>
+      <tr>
+        <td><div class="feature-name">AI Autonomous Remediation</div>LLM-driven self-healing agent (Atera Robin model)</div></td>
+        <td><span class="priority priority-low">Low (Future)</span></td>
+        <td>Atera (full), 5 others (partial)</td>
+        <td>Emerging capability. Atera's Robin resolves issues without human intervention. Implementing this would position SentinelEdge as a differentiated, forward-thinking platform.</td>
+      </tr>
+      <tr>
+        <td><div class="feature-name">Microsoft 365 Integration</div>Manage M365 users/licenses from agent dashboard</td>
+        <td><span class="priority priority-low">Low (Future)</span></td>
+        <td>Datto (native), N-able (Cloud Commander)</td>
+        <td>MSP clients are predominantly M365-based. Unified management reduces context-switching for technicians.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════ PAGE 7: IMPLEMENTATIONS 1-4 ═══════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-header-title">06 · Implementation Proposals</span>
+    <span class="page-header-logo">SentinelEdge · 2026</span>
+  </div>
+
+  <div class="section-eyebrow">Technical Blueprints</div>
+  <h3>Implementation Proposals — Phase 1: Core Monitoring</h3>
+
+  <div class="impl-card">
+    <div class="impl-card-header">
+      <div class="impl-title">01 · Real-Time Threshold Alerting Engine</div>
+      <span class="priority priority-critical">Critical</span>
+    </div>
+    <div class="impl-meta">
+      <span class="impl-tag">Go agent</span>
+      <span class="impl-tag">internal/monitor/</span>
+      <span class="impl-tag">API: POST /alerts</span>
+      <span class="impl-tag">~3 weeks</span>
+    </div>
+    <div class="impl-desc">Add a configurable metrics collection goroutine that samples CPU usage, RAM consumption, disk space per volume, and network interface statistics at a configurable interval (default: 60s). Compare each metric against thresholds stored in a local config section (synced from API on startup). When a threshold is breached, send an alert event to the API with severity, metric name, current value, and threshold. Implement hysteresis to avoid alert storms (don't re-alert until value recovers + grace period).</div>
+    <div class="impl-section-label">Why it matters</div>
+    <div class="impl-desc">This is the single most impactful gap. It transforms SentinelEdge from a command executor into a proactive monitoring platform — the core value proposition of any RMM.</div>
+    <div class="impl-section-label">Technical approach</div>
+    <ul class="impl-list">
+      <li>New <code style="font-family: JetBrains Mono; font-size: 8.5pt;">internal/monitor/</code> package: <code style="font-family: JetBrains Mono; font-size: 8.5pt;">metrics.go</code> (collect), <code style="font-family: JetBrains Mono; font-size: 8.5pt;">alerter.go</code> (evaluate + send), <code style="font-family: JetBrains Mono; font-size: 8.5pt;">thresholds.go</code> (config)</li>
+      <li>Use <code style="font-family: JetBrains Mono; font-size: 8.5pt;">github.com/shirou/gopsutil/v3</code> for cross-platform CPU/RAM/Disk/Network metrics</li>
+      <li>Thresholds pulled from API: <code style="font-family: JetBrains Mono; font-size: 8.5pt;">GET /agents/{id}/thresholds</code> — stored locally, re-synced every hour</li>
+      <li>Alert payload: <code style="font-family: JetBrains Mono; font-size: 8.5pt;">{ agent_id, metric, value, threshold, severity, timestamp }</code></li>
+      <li>Hysteresis: state machine per metric (Normal → Alerting → Recovering) with configurable recovery window</li>
+    </ul>
+  </div>
+
+  <div class="impl-card">
+    <div class="impl-card-header">
+      <div class="impl-title">02 · Windows Event Log Monitor</div>
+      <span class="priority priority-critical">Critical</span>
+    </div>
+    <div class="impl-meta">
+      <span class="impl-tag">Go agent</span>
+      <span class="impl-tag">internal/eventlog/</span>
+      <span class="impl-tag">Windows API: wevtapi.dll</span>
+      <span class="impl-tag">~2 weeks</span>
+    </div>
+    <div class="impl-desc">Subscribe to Windows Event Log channels (System, Application, Security, custom) and forward critical events matching configurable event ID rules to the API. This enables detection of login failures (Event 4625), service crashes (7034), disk errors (7, 11), and application crashes — without requiring PowerShell scripts on demand.</div>
+    <div class="impl-section-label">Why it matters</div>
+    <div class="impl-desc">Security compliance (SOC2 CC7.2, HIPAA §164.312, CMMC AU.2.042) requires continuous log monitoring. Competitors deliver this out of the box; SentinelEdge has no visibility into Windows events today.</div>
+    <div class="impl-section-label">Technical approach</div>
+    <ul class="impl-list">
+      <li>Use <code style="font-family: JetBrains Mono; font-size: 8.5pt;">golang.org/x/sys/windows</code> to call <code style="font-family: JetBrains Mono; font-size: 8.5pt;">EvtSubscribe</code> API (push subscription, not polling)</li>
+      <li>Subscribe to: System, Application, Security channels by default; configurable from API</li>
+      <li>Event filter: EventIDs configurable per-tenant (defaults: 4625, 4648, 6008, 7034, 7036, 7040)</li>
+      <li>Batch events in memory (max 50 or 30s) before sending to reduce API calls</li>
+      <li>Include: EventID, Channel, Level, Message (truncated to 500 chars), TimeCreated</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 8: IMPLEMENTATIONS 3-6 ═══════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-header-title">06 · Implementation Proposals (continued)</span>
+    <span class="page-header-logo">SentinelEdge · 2026</span>
+  </div>
+
+  <div class="impl-card">
+    <div class="impl-card-header">
+      <div class="impl-title">03 · Interactive Remote Terminal (WebSocket)</div>
+      <span class="priority priority-critical">Critical</span>
+    </div>
+    <div class="impl-meta">
+      <span class="impl-tag">Go agent</span>
+      <span class="impl-tag">internal/terminal/</span>
+      <span class="impl-tag">WebSocket: gorilla/websocket</span>
+      <span class="impl-tag">~4 weeks</span>
+    </div>
+    <div class="impl-desc">Replace the poll-based command model with a WebSocket connection for interactive terminal sessions. When a technician opens a terminal session in the dashboard, the API creates a session token, the agent receives a "open-terminal" command, establishes a WebSocket to the API, spawns a PowerShell or cmd.exe process with I/O pipes, and relays stdin/stdout bidirectionally in real time. The poll-based model remains for non-interactive commands.</div>
+    <div class="impl-section-label">Technical approach</div>
+    <ul class="impl-list">
+      <li>New command type <code style="font-family: JetBrains Mono; font-size: 8.5pt;">"terminal"</code> with <code style="font-family: JetBrains Mono; font-size: 8.5pt;">{ session_token, shell }</code> payload</li>
+      <li>Agent dials <code style="font-family: JetBrains Mono; font-size: 8.5pt;">wss://saapi.ardepa.site/ws/terminal/{session_token}</code> with Bearer auth</li>
+      <li>Spawns <code style="font-family: JetBrains Mono; font-size: 8.5pt;">powershell.exe -NoExit</code> using <code style="font-family: JetBrains Mono; font-size: 8.5pt;">os/exec</code>, pipes stdin/stdout/stderr to WS</li>
+      <li>Session timeout: 30 min idle; max session duration: 4 hours (configurable)</li>
+      <li>Audit log: every keystroke session logged server-side (actor + timestamp + session ID)</li>
+      <li>Dashboard UI: xterm.js frontend terminal emulator</li>
+    </ul>
+    <div class="callout" style="margin-top: 12px;">
+      <div class="callout-title">Security Consideration</div>
+      <p style="font-size: 9pt;">Terminal sessions must still be gated by the command allowlist for initial shell type. Add separate RBAC permission <code style="font-family: JetBrains Mono; font-size: 8pt;">terminal.open</code> — not all technician roles should have interactive shell access.</p>
+    </div>
+  </div>
+
+  <div class="impl-card">
+    <div class="impl-card-header">
+      <div class="impl-title">04 · Patch Management Engine</div>
+      <span class="priority priority-critical">Critical</span>
+    </div>
+    <div class="impl-meta">
+      <span class="impl-tag">Go agent</span>
+      <span class="impl-tag">internal/patcher/</span>
+      <span class="impl-tag">Windows Update API (COM)</span>
+      <span class="impl-tag">~5 weeks</span>
+    </div>
+    <div class="impl-desc">Implement a two-phase patch management system: (1) Scan — query Windows Update Agent COM API and installed software for available patches, report to API with CVE mappings; (2) Install — receive approved patch lists from API, download and install patches, report results with reboot requirements. Support approval workflows: patches can be in Pending/Approved/Declined state per-tenant policy.</div>
+    <div class="impl-section-label">Why it matters</div>
+    <div class="impl-desc">Patch management is the single most commonly purchased RMM feature. Every competitor ships it. Its absence is the most commercially significant gap in SentinelEdge.</div>
+    <div class="impl-section-label">Technical approach</div>
+    <ul class="impl-list">
+      <li>Phase 1 (Scan): Use <code style="font-family: JetBrains Mono; font-size: 8.5pt;">golang.org/x/sys/windows/registry</code> + WMI <code style="font-family: JetBrains Mono; font-size: 8.5pt;">Win32_QuickFixEngineering</code> to enumerate installed updates</li>
+      <li>Query Windows Update Agent (WUA) COM via PowerShell wrapper: <code style="font-family: JetBrains Mono; font-size: 8.5pt;">Get-WindowsUpdate</code></li>
+      <li>Map installed software versions to NVD CVE database (pull from <code style="font-family: JetBrains Mono; font-size: 8.5pt;">nvd.nist.gov/feeds</code> — cached API-side)</li>
+      <li>Phase 2 (Install): Execute approved patches via WUA COM <code style="font-family: JetBrains Mono; font-size: 8.5pt;">IUpdateInstaller</code> interface</li>
+      <li>Report: KBID, status (success/failed/reboot-needed), pre/post install timestamps</li>
+      <li>Schedule: configurable scan every 24h; install window (e.g., Tue 02:00–04:00)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 9: IMPLEMENTATIONS 5-8 ═══════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-header-title">06 · Implementation Proposals (continued)</span>
+    <span class="page-header-logo">SentinelEdge · 2026</span>
+  </div>
+
+  <div class="impl-card">
+    <div class="impl-card-header">
+      <div class="impl-title">05 · Windows Service &amp; Process Monitor</div>
+      <span class="priority priority-high">High</span>
+    </div>
+    <div class="impl-meta">
+      <span class="impl-tag">Go agent</span>
+      <span class="impl-tag">internal/monitor/services.go</span>
+      <span class="impl-tag">WMI Win32_Service</span>
+      <span class="impl-tag">~1.5 weeks</span>
+    </div>
+    <div class="impl-desc">Monitor the state of named Windows services and critical processes. For services: detect state changes (Running → Stopped), optionally auto-restart, and send alert to API. For processes: watch for unexpected process appearances (security) or disappearances (operational). Configuration is pulled from API per-tenant policy.</div>
+    <ul class="impl-list">
+      <li>Poll <code style="font-family: JetBrains Mono; font-size: 8.5pt;">Win32_Service</code> via WMI every 60s; compare state against last known state</li>
+      <li>Config: <code style="font-family: JetBrains Mono; font-size: 8.5pt;">{ service_name, expected_state, auto_restart: bool, alert_on_change: bool }</code></li>
+      <li>Auto-restart: call <code style="font-family: JetBrains Mono; font-size: 8.5pt;">net start {service}</code> once; mark as "restart attempted" in alert payload</li>
+      <li>Process watch: blocklist and watchlist; alert when blocklisted process spawns (malware detection signal)</li>
+      <li>Process watch uses <code style="font-family: JetBrains Mono; font-size: 8.5pt;">gopsutil/v3/process</code> for cross-platform compatibility</li>
+    </ul>
+  </div>
+
+  <div class="impl-card">
+    <div class="impl-card-header">
+      <div class="impl-title">06 · Secure File Transfer</div>
+      <span class="priority priority-high">High</span>
+    </div>
+    <div class="impl-meta">
+      <span class="impl-tag">Go agent</span>
+      <span class="impl-tag">internal/filetransfer/</span>
+      <span class="impl-tag">Chunked HTTP multipart</span>
+      <span class="impl-tag">~2 weeks</span>
+    </div>
+    <div class="impl-desc">Enable two-way file transfer: (1) Push — API sends signed URL for agent to download a file to a specified path; (2) Pull — agent uploads a file from a specified path to the API using multipart upload. All transfers are authenticated, size-limited, path-restricted, and audit-logged.</div>
+    <ul class="impl-list">
+      <li><strong>Push</strong>: new command type <code style="font-family: JetBrains Mono; font-size: 8.5pt;">"file-push"</code> → <code style="font-family: JetBrains Mono; font-size: 8.5pt;">{ signed_url, dest_path, sha256, max_size_mb }</code></li>
+      <li><strong>Pull</strong>: new command type <code style="font-family: JetBrains Mono; font-size: 8.5pt;">"file-pull"</code> → <code style="font-family: JetBrains Mono; font-size: 8.5pt;">{ src_path, upload_url }</code></li>
+      <li>Path restrictions: allowlist of directories where files can be written/read (no system32, no registry hive paths)</li>
+      <li>Max file size: 100MB configurable; SHA256 verified on push before writing</li>
+      <li>Audit log: every transfer logged with actor, path, size, timestamp, direction</li>
+    </ul>
+  </div>
+
+  <div class="impl-card">
+    <div class="impl-card-header">
+      <div class="impl-title">07 · Software Deployment Engine</div>
+      <span class="priority priority-high">High</span>
+    </div>
+    <div class="impl-meta">
+      <span class="impl-tag">Go agent</span>
+      <span class="impl-tag">internal/deploy/</span>
+      <span class="impl-tag">MSI/EXE silent install</span>
+      <span class="impl-tag">~2.5 weeks</span>
+    </div>
+    <div class="impl-desc">Deploy software packages (MSI, EXE, ZIP) to endpoints from a central package library stored on the API. The agent downloads the installer, verifies its SHA256, executes it silently, detects installation success by checking the software inventory post-install, and reports the result. Supports both push (immediate) and scheduled (maintenance window) deployment.</div>
+    <ul class="impl-list">
+      <li>New command type <code style="font-family: JetBrains Mono; font-size: 8.5pt;">"deploy"</code>: <code style="font-family: JetBrains Mono; font-size: 8.5pt;">{ package_id, download_url, sha256, install_args, type }</code></li>
+      <li>MSI: <code style="font-family: JetBrains Mono; font-size: 8.5pt;">msiexec.exe /i package.msi /quiet /norestart</code></li>
+      <li>EXE: configurable silent args (e.g. <code style="font-family: JetBrains Mono; font-size: 8.5pt;">/S</code>, <code style="font-family: JetBrains Mono; font-size: 8.5pt;">/silent</code>) from package manifest</li>
+      <li>Post-install verification: re-run software inventory query for the installed product name</li>
+      <li>Download URL must pass the existing allowlist validation (extending existing security model)</li>
+    </ul>
+  </div>
+
+  <div class="impl-card">
+    <div class="impl-card-header">
+      <div class="impl-title">08 · Script &amp; Task Library</div>
+      <span class="priority priority-high">High</span>
+    </div>
+    <div class="impl-meta">
+      <span class="impl-tag">API + Dashboard</span>
+      <span class="impl-tag">Server-side</span>
+      <span class="impl-tag">Git-backed script storage</span>
+      <span class="impl-tag">~2 weeks</span>
+    </div>
+    <div class="impl-desc">Build a centralized script library in the SentinelEdge API and dashboard. Scripts can be categorized (Maintenance, Security, Diagnostics, Compliance), assigned to schedules, and executed against device groups. The library ships with a starter set of commonly needed scripts (disk cleanup, user audit, AV status check) seeded from well-known open-source RMM script repositories.</div>
+    <ul class="impl-list">
+      <li>API: <code style="font-family: JetBrains Mono; font-size: 8.5pt;">Script</code> model: id, name, category, language, body, version, sha256, author, created_at</li>
+      <li>Dashboard: Script Library page with search, filter by category, preview, edit, clone</li>
+      <li>Execution: create a <code style="font-family: JetBrains Mono; font-size: 8.5pt;">Command</code> record with <code style="font-family: JetBrains Mono; font-size: 8.5pt;">script_id</code> reference; agent fetches body by ID</li>
+      <li>Scheduling: cron-style schedule per script × device group (e.g. every Sunday at 03:00)</li>
+      <li>SHA256 pre-computed server-side; agent validates before execution (extends existing allowlist model)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 10: IMPLEMENTATIONS 9-14 ═══════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-header-title">06 · Implementation Proposals (continued)</span>
+    <span class="page-header-logo">SentinelEdge · 2026</span>
+  </div>
+
+  <div class="impl-card">
+    <div class="impl-card-header">
+      <div class="impl-title">09 · Vulnerability Scanning &amp; CVE Mapping</div>
+      <span class="priority priority-medium">Medium</span>
+    </div>
+    <div class="impl-meta">
+      <span class="impl-tag">API server-side</span>
+      <span class="impl-tag">NVD CVE feed</span>
+      <span class="impl-tag">nvd.nist.gov/feeds</span>
+      <span class="impl-tag">~3 weeks</span>
+    </div>
+    <div class="impl-desc">The agent already collects software inventory (name + version). Add a server-side CVE matching engine: sync the NVD CVE JSON feed daily, parse CPE (Common Platform Enumeration) identifiers, and match against software inventory records stored per endpoint. Surface vulnerabilities in the dashboard with CVSS scores, affected endpoints, and recommended patches.</div>
+    <ul class="impl-list">
+      <li>Agent: no change needed — existing software inventory already captures name + version</li>
+      <li>API: background task syncs <code style="font-family: JetBrains Mono; font-size: 8.5pt;">nvd.nist.gov/feeds/json/cve/1.1/</code> daily into Supabase <code style="font-family: JetBrains Mono; font-size: 8.5pt;">cve_entries</code> table</li>
+      <li>Matching: normalize software name to CPE string, query <code style="font-family: JetBrains Mono; font-size: 8.5pt;">cve_entries</code> for version ranges</li>
+      <li>Dashboard: Vulnerability Overview page — sort by CVSS score, filter by tenant, export to PDF</li>
+      <li>Integration with Patch Management (Impl 04): auto-recommend patch for CVE-matched software</li>
+    </ul>
+  </div>
+
+  <div class="impl-card">
+    <div class="impl-card-header">
+      <div class="impl-title">10 · Policy-Based Configuration Engine</div>
+      <span class="priority priority-medium">Medium</span>
+    </div>
+    <div class="impl-meta">
+      <span class="impl-tag">API + Dashboard + Agent</span>
+      <span class="impl-tag">Policy evaluation on startup</span>
+      <span class="impl-tag">~3 weeks</span>
+    </div>
+    <div class="impl-desc">Allow MSP admins to define configuration policies (alert thresholds, monitoring rules, patch windows, allowed script categories) at the tenant or device-group level. Agents pull their effective policy on startup and on a 1-hour refresh cycle. Policy changes propagate to all devices in a group without manual intervention per device.</div>
+    <ul class="impl-list">
+      <li>Policy model: tenant-level defaults → device-group overrides → per-device overrides (inheritance chain)</li>
+      <li>Policy includes: alert thresholds, monitored services list, event IDs to watch, patch approval mode, max concurrent commands</li>
+      <li>Agent: <code style="font-family: JetBrains Mono; font-size: 8.5pt;">GET /agents/{id}/policy</code> on startup and every 3600s; store in memory (not on disk)</li>
+      <li>Dashboard: Policy editor with JSON schema validation, group assignment, effective policy preview</li>
+      <li>Audit: policy changes recorded in audit log (who changed what, when)</li>
+    </ul>
+  </div>
+
+  <div class="impl-card">
+    <div class="impl-card-header">
+      <div class="impl-title">11 · Linux &amp; macOS Agent Support</div>
+      <span class="priority priority-medium">Medium</span>
+    </div>
+    <div class="impl-meta">
+      <span class="impl-tag">Go cross-platform</span>
+      <span class="impl-tag">GOOS=linux/darwin</span>
+      <span class="impl-tag">systemd / launchd</span>
+      <span class="impl-tag">~4 weeks</span>
+    </div>
+    <div class="impl-desc">Go's cross-compilation makes multi-platform support structurally achievable. Extract all Windows-specific code (WMI inventory, Windows service wrapper, Event Log) behind platform interfaces. Build Linux (systemd) and macOS (launchd) service wrappers. Replace WMI inventory with <code style="font-family: JetBrains Mono; font-size: 8.5pt;">gopsutil</code> for cross-platform metrics.</div>
+    <ul class="impl-list">
+      <li>Abstract platform layer: <code style="font-family: JetBrains Mono; font-size: 8.5pt;">internal/platform/</code> with <code style="font-family: JetBrains Mono; font-size: 8.5pt;">inventory_windows.go</code>, <code style="font-family: JetBrains Mono; font-size: 8.5pt;">inventory_linux.go</code>, <code style="font-family: JetBrains Mono; font-size: 8.5pt;">inventory_darwin.go</code> (build tags)</li>
+      <li>Linux inventory: <code style="font-family: JetBrains Mono; font-size: 8.5pt;">dmidecode</code> + <code style="font-family: JetBrains Mono; font-size: 8.5pt">dpkg/rpm</code> for software; <code style="font-family: JetBrains Mono; font-size: 8.5pt;">gopsutil</code> for metrics</li>
+      <li>macOS inventory: <code style="font-family: JetBrains Mono; font-size: 8.5pt;">system_profiler</code> + <code style="font-family: JetBrains Mono; font-size: 8.5pt;">brew list</code> for software</li>
+      <li>Build pipeline: <code style="font-family: JetBrains Mono; font-size: 8.5pt;">GOOS=linux GOARCH=amd64</code> + <code style="font-family: JetBrains Mono; font-size: 8.5pt;">GOOS=darwin GOARCH=arm64</code> in GitHub Actions</li>
+      <li>kardianos/service already supports Windows/Linux/macOS — no service wrapper rewrite needed</li>
+    </ul>
+  </div>
+
+  <div class="impl-card">
+    <div class="impl-card-header">
+      <div class="impl-title">12 · AI-Assisted Autonomous Remediation</div>
+      <span class="priority priority-low">Low — Future</span>
+    </div>
+    <div class="impl-meta">
+      <span class="impl-tag">Claude Sonnet API</span>
+      <span class="impl-tag">Agent-side execution</span>
+      <span class="impl-tag">Tool-calling pattern</span>
+      <span class="impl-tag">~6 weeks</span>
+    </div>
+    <div class="impl-desc">Inspired by Atera's Robin, build an AI remediation loop: when an alert fires, instead of only notifying technicians, optionally invoke an AI agent (Claude Sonnet) with the alert context, system metrics, and recent event logs. The AI can call approved diagnostic tools (commands from the allowlist), read results, and attempt remediation. All AI actions are gated by the allowlist and require technician approval for destructive steps.</div>
+    <ul class="impl-list">
+      <li>AI agent receives: alert type, current metrics snapshot, last 50 event log entries, installed services list</li>
+      <li>AI can call: approved diagnostic PS scripts (disk analysis, process list, network stats)</li>
+      <li>Remediation actions requiring approval: service restarts, patch installs, process termination</li>
+      <li>Technician approval via Slack/Teams webhook or dashboard notification before execution</li>
+      <li>Full audit trail: AI reasoning steps, tools called, results, final action taken</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 11: ROADMAP ═══════════════════ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-header-title">07 · Prioritized Roadmap</span>
+    <span class="page-header-logo">SentinelEdge · 2026</span>
+  </div>
+
+  <div class="section-eyebrow">Implementation Timeline</div>
+  <h3>Phased Roadmap</h3>
+
+  <p>The roadmap is structured in four phases based on business impact, technical dependency, and implementation complexity. Phases 1 and 2 close the critical competitive parity gaps. Phases 3 and 4 build differentiation.</p>
+
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-phase">Phase 1 · Q2 2026 (Months 1–3)</div>
+      <div class="timeline-title">Monitoring Foundation — Achieve Competitive Parity on Core Features</div>
+      <div class="timeline-desc">
+        <strong style="color: var(--text)">Impl 01</strong> Real-Time Threshold Alerting (CPU/RAM/Disk/Network) · 3 weeks<br>
+        <strong style="color: var(--text)">Impl 02</strong> Windows Event Log Monitor · 2 weeks<br>
+        <strong style="color: var(--text)">Impl 05</strong> Windows Service &amp; Process Monitor · 1.5 weeks<br>
+        <strong style="color: var(--text)">Security</strong> Resolve F-01 (TLS pinning) + F-05 (command nonces)<br><br>
+        <em style="color: var(--text-dim)">Deliverable: SentinelEdge can proactively alert on endpoint health issues without technician polling. Required for any serious MSP evaluation.</em>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-phase">Phase 2 · Q3 2026 (Months 4–6)</div>
+      <div class="timeline-title">Operational Capabilities — Enable Day-to-Day MSP Workflows</div>
+      <div class="timeline-desc">
+        <strong style="color: var(--text)">Impl 03</strong> Interactive Remote Terminal (WebSocket) · 4 weeks<br>
+        <strong style="color: var(--text)">Impl 06</strong> Secure File Transfer (push/pull) · 2 weeks<br>
+        <strong style="color: var(--text)">Impl 07</strong> Software Deployment Engine (MSI/EXE) · 2.5 weeks<br>
+        <strong style="color: var(--text)">Impl 08</strong> Script &amp; Task Library (API/Dashboard) · 2 weeks<br><br>
+        <em style="color: var(--text-dim)">Deliverable: Technicians can perform full endpoint management workflows from the SentinelEdge dashboard without leaving the platform.</em>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-phase">Phase 3 · Q4 2026 (Months 7–9)</div>
+      <div class="timeline-title">Security &amp; Compliance — Position SentinelEdge for Security-Conscious MSPs</div>
+      <div class="timeline-desc">
+        <strong style="color: var(--text)">Impl 04</strong> Patch Management Engine (OS + software) · 5 weeks<br>
+        <strong style="color: var(--text)">Impl 09</strong> Vulnerability Scanning &amp; CVE Mapping · 3 weeks<br>
+        <strong style="color: var(--text)">Impl 10</strong> Policy-Based Configuration Engine · 3 weeks<br>
+        <strong style="color: var(--text)">Impl 11</strong> Linux &amp; macOS Agent Support · 4 weeks<br><br>
+        <em style="color: var(--text-dim)">Deliverable: SentinelEdge can support MSPs with SOC2/HIPAA/CMMC compliance requirements. Cross-platform coverage enables mixed-OS client environments.</em>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-phase">Phase 4 · Q1 2027 (Months 10–12)</div>
+      <div class="timeline-title">Differentiation — AI, Mobile, and M365 Integration</div>
+      <div class="timeline-desc">
+        <strong style="color: var(--text)">Impl 12</strong> AI Autonomous Remediation (Claude-powered) · 6 weeks<br>
+        <strong style="color: var(--text)">Future</strong> Mobile app (React Native) for iOS/Android · 6 weeks<br>
+        <strong style="color: var(--text)">Future</strong> Microsoft Graph / M365 tenant management · 4 weeks<br>
+        <strong style="color: var(--text)">Future</strong> SNMP network device monitoring · 3 weeks<br><br>
+        <em style="color: var(--text-dim)">Deliverable: SentinelEdge is differentiated from incumbents with AI-first remediation — a capability only Atera delivers today, giving SentinelEdge a unique selling proposition.</em>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 12: CONCLUSIONS ═══════════════════ -->
+<div class="page" style="page-break-after: avoid;">
+  <div class="page-header">
+    <span class="page-header-title">08 · Conclusions</span>
+    <span class="page-header-logo">SentinelEdge · 2026</span>
+  </div>
+
+  <div class="section-eyebrow">Final Assessment</div>
+  <h3>Conclusions &amp; Recommendations</h3>
+
+  <p>SentinelEdge Agent has a technically sound, security-forward foundation that compares favorably to incumbents in credential management (Vaultwarden), command security (deny-by-default allowlist), and update integrity (SHA256 verification). However, the feature set represents approximately <strong style="color: var(--text)">~20% of the baseline capability</strong> expected of a commercially viable RMM agent in 2026.</p>
+
+  <div class="callout success">
+    <div class="callout-title">Competitive Advantage Already Built</div>
+    <p>SentinelEdge's deny-by-default command allowlist with SHA256 hash registry is <strong style="color: var(--text)">more security-rigorous than any competitor's default configuration</strong>. This is a genuine differentiator that can be marketed to security-conscious MSPs and compliance-driven verticals (healthcare, finance, government contractors).</p>
+  </div>
+
+  <h4>Top 4 Actions to Take Immediately</h4>
+  <ul class="impl-list" style="margin-top: 8px;">
+    <li><strong style="color: var(--text)">Start Impl 01 (Alerting Engine)</strong> — this single feature transforms SentinelEdge from a command runner to a monitoring platform. Highest ROI per development hour.</li>
+    <li><strong style="color: var(--text)">Start Impl 02 (Event Log Monitor)</strong> — enables compliance use cases. Can be developed in parallel with alerting. Unlocks SOC2/HIPAA/CMMC customer conversations.</li>
+    <li><strong style="color: var(--text)">Fix F-01 CRITICAL (TLS Pinning)</strong> — outstanding security debt from the April 2026 audit. Should not ship new features until critical security findings are resolved.</li>
+    <li><strong style="color: var(--text)">Design Impl 03 (Remote Terminal)</strong> — resolves the 30-second latency ceiling that prevents interactive troubleshooting. Required before Phase 2 work begins.</li>
+  </ul>
+
+  <div class="section-divider"></div>
+
+  <h4>Unique Opportunity in the Market</h4>
+  <p>Atera launched Robin (AI autonomous remediation) in March 2026 and it is still early-stage. No other RMM has a mature, production-ready AI remediation agent. Implementing Impl 12 (AI Autonomous Remediation using Claude Sonnet) before competitors mature their offerings gives SentinelEdge the opportunity to be the <strong style="color: var(--text)">"AI-native RMM" positioning</strong> — a significant market differentiation point. Given that the existing team already integrates Claude AI (see Finanzas Ardepa), this is a realistic near-term capability.</p>
+
+  <div class="callout warning">
+    <div class="callout-title">API-Side Issue Requiring Parallel Action</div>
+    <p>The SentinelEdge API stores <code style="font-family: JetBrains Mono; font-size: 8.5pt;">Agent.token</code> in plaintext in Supabase. The <code style="font-family: JetBrains Mono; font-size: 8.5pt;">hash_token()</code> function exists in <code style="font-family: JetBrains Mono; font-size: 8.5pt;">core/security.py</code> but is not wired up. This must be resolved before any public release — a compromised Supabase database would expose all agent tokens across all tenants.</p>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <p style="font-size: 9pt; color: var(--text-dim); text-align: center; margin-top: 24px;">
+    SentinelEdge Agent · Competitive Analysis Report · April 2, 2026 · Confidential — Internal Use Only
+  </p>
+</div>
+
+</body>
+</html>

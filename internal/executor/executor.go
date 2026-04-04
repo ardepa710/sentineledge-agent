@@ -31,7 +31,7 @@ func Execute(cmd models.Command) models.Result {
 
 	// Comando especial: update
 	if cmd.Type == "update" {
-		if err := updater.Update(); err != nil {
+		if err := updater.Update(""); err != nil {
 			result.ExitCode = 1
 			result.Stderr = err.Error()
 		} else {
