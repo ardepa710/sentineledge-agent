@@ -47,6 +47,7 @@ func LoadConfig() *Config {
 	viper.BindEnv("APIKey", "SE_API_KEY")                        //nolint:errcheck
 
 	viper.SetDefault("PollInterval", 30)
+	viper.SetDefault("HeartbeatInterval", 60)
 	viper.SetDefault("ServerURL", "https://saapi.ardepa.site")
 	viper.SetDefault("VaultOrgID", "ebefd607-bd17-4a3f-aa01-4d1a28948ef5")
 	viper.SetDefault("VaultColAgents", "d0f075e6-65d2-4f13-935c-e4d7a3dce261")

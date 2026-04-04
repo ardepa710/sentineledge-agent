@@ -106,10 +106,11 @@ func (a *Agent) Run() {
 	inventoryTicker := time.NewTicker(24 * time.Hour)
 	defer inventoryTicker.Stop()
 
-	// Ticker para heartbeat — configurable, default 5 minutos
+	// Ticker para heartbeat — configurable, default 60s
+	// La API marca offline si last_seen > 120s, así que 60s permite tolerar 1 heartbeat perdido
 	hbInterval := a.config.HeartbeatInterval
 	if hbInterval <= 0 {
-		hbInterval = 300 // 5 minutes default
+		hbInterval = 60 // 1 minute default
 	}
 	heartbeatTicker := time.NewTicker(time.Duration(hbInterval) * time.Second)
 	defer heartbeatTicker.Stop()
