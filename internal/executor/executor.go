@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/sentineledge/agent/internal/allowlist"
 	"github.com/sentineledge/agent/internal/updater"
 	"github.com/sentineledge/agent/pkg/models"
 )
@@ -16,17 +15,6 @@ import (
 func Execute(cmd models.Command) models.Result {
 	result := models.Result{
 		JobID: cmd.ID,
-	}
-
-	// Security: validate command against allowlist before any execution.
-	// Deny-by-default: unknown types and non-allowlisted payloads are rejected here.
-	if err := allowlist.Validate(cmd.Type, cmd.Payload); err != nil {
-		log.Printf("SECURITY: job %s rejected by allowlist — %v", cmd.ID, err)
-		result.ExitCode = 1
-		result.Stderr = fmt.Sprintf("command rejected by security allowlist: %v", err)
-		result.Error = "command_not_allowed"
-		result.FinishedAt = time.Now().UTC()
-		return result
 	}
 
 	// Comando especial: update
@@ -42,6 +30,15 @@ func Execute(cmd models.Command) models.Result {
 		return result
 	}
 
+	if cmd.Type != "powershell" {
+		log.Printf("Executor: unhandled command type %q for job %s", cmd.Type, cmd.ID)
+		result.ExitCode = 1
+		result.Stderr = fmt.Sprintf("unhandled command type %q", cmd.Type)
+		result.Error = "command_not_allowed"
+		result.FinishedAt = time.Now().UTC()
+		return result
+	}
+
 	timeout := time.Duration(cmd.Timeout) * time.Second
 	if cmd.Timeout == 0 {
 		timeout = 5 * time.Minute
@@ -49,14 +46,6 @@ func Execute(cmd models.Command) models.Result {
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-
-	if cmd.Type != "powershell" {
-		result.ExitCode = 1
-		result.Stderr = fmt.Sprintf("command rejected by security allowlist: unhandled command type %q", cmd.Type)
-		result.Error = "command_not_allowed"
-		result.FinishedAt = time.Now().UTC()
-		return result
-	}
 
 	execCmd := exec.CommandContext(ctx,
 		"powershell.exe",
