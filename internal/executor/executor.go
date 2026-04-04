@@ -50,21 +50,21 @@ func Execute(cmd models.Command) models.Result {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	var execCmd *exec.Cmd
-
-	if cmd.Type == "powershell" {
-		execCmd = exec.CommandContext(ctx,
-			"powershell.exe",
-			"-NonInteractive",
-			"-NoProfile",
-			"-ExecutionPolicy", "Bypass",
-			"-Command", cmd.Payload,
-		)
-	} else {
-		execCmd = exec.CommandContext(ctx,
-			"/bin/bash", "-c", cmd.Payload,
-		)
+	if cmd.Type != "powershell" {
+		result.ExitCode = 1
+		result.Stderr = fmt.Sprintf("command rejected by security allowlist: unhandled command type %q", cmd.Type)
+		result.Error = "command_not_allowed"
+		result.FinishedAt = time.Now().UTC()
+		return result
 	}
+
+	execCmd := exec.CommandContext(ctx,
+		"powershell.exe",
+		"-NonInteractive",
+		"-NoProfile",
+		"-ExecutionPolicy", "Bypass",
+		"-Command", cmd.Payload,
+	)
 
 	var stdout, stderr bytes.Buffer
 	execCmd.Stdout = &stdout

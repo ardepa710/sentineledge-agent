@@ -18,7 +18,7 @@ func (p *program) Start(s service.Service) error {
 }
 
 func (p *program) Stop(s service.Service) error {
-	log.Println("Stoppping SentinelEdge Agent...")
+	log.Println("Stopping SentinelEdge Agent...")
 	return nil
 }
 
@@ -45,9 +45,9 @@ func main() {
 		case "install":
 			err = s.Install()
 			if err != nil {
-				log.Fatalf("Error Installing Seervice: %v", err)
+				log.Fatalf("Error installing service: %v", err)
 			}
-			log.Println("Service Sucessfully Installed")
+			log.Println("Service successfully installed")
 			return
 		case "uninstall":
 			err = s.Uninstall()
@@ -61,14 +61,14 @@ func main() {
 			if err != nil {
 				log.Fatalf("Error starting service: %v", err)
 			}
-			log.Println("Servicio Successfully Started")
+			log.Println("Service successfully started")
 			return
 		case "stop":
 			err = s.Stop()
 			if err != nil {
 				log.Fatalf("Error stopping service: %v", err)
 			}
-			log.Println("Servicio Sucessfully Stopped")
+			log.Println("Service successfully stopped")
 			return
 		}
 	}

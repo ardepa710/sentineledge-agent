@@ -182,7 +182,9 @@ func (v *VaultClient) StoreSecret(name, value, orgID, collectionID string) error
 	var created struct {
 		ID string `json:"id"`
 	}
-	json.Unmarshal(respBody, &created)
+	if err := json.Unmarshal(respBody, &created); err != nil {
+		return fmt.Errorf("could not parse cipher creation response: %w", err)
+	}
 
 	if created.ID == "" {
 		return fmt.Errorf("could not get cipher ID from response")

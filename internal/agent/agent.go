@@ -54,32 +54,19 @@ func New(cfg *Config) *Agent {
 				cfg.VaultColAgents,
 			)
 			if err != nil {
-				log.Printf("StoreSecret error: %v", err)
-			} else {
-				log.Println("Token stored in Vaultwarden successfully")
-			}
-			if err != nil {
 				log.Printf("Warning: could not store token in vault: %v — saving to agent.yaml", err)
-				viper.Set("AgentID", resp.ID)
-				viper.Set("PollInterval", cfg.PollInterval)
-				viper.Set("ServerURL", cfg.ServerURL)
-				viper.Set("TenantID", cfg.TenantID)
-				viper.Set("VaultURL", cfg.VaultURL)
-				viper.Set("VaultClientID", cfg.VaultClientID)
-				viper.Set("VaultClientSecret", cfg.VaultClientSecret)
-				viper.WriteConfig()
 			} else {
 				log.Println("Token stored in Vaultwarden successfully")
-				// Solo guardar AgentID en agent.yaml, nunca el token
-				viper.Set("AgentID", resp.ID)
-				viper.Set("PollInterval", cfg.PollInterval)
-				viper.Set("ServerURL", cfg.ServerURL)
-				viper.Set("TenantID", cfg.TenantID)
-				viper.Set("VaultURL", cfg.VaultURL)
-				viper.Set("VaultClientID", cfg.VaultClientID)
-				viper.Set("VaultClientSecret", cfg.VaultClientSecret)
-				viper.WriteConfig()
 			}
+			// Solo guardar AgentID en agent.yaml, nunca el token
+			viper.Set("AgentID", resp.ID)
+			viper.Set("PollInterval", cfg.PollInterval)
+			viper.Set("ServerURL", cfg.ServerURL)
+			viper.Set("TenantID", cfg.TenantID)
+			viper.Set("VaultURL", cfg.VaultURL)
+			viper.Set("VaultClientID", cfg.VaultClientID)
+			viper.Set("VaultClientSecret", cfg.VaultClientSecret)
+			viper.WriteConfig()
 		} else {
 			// Sin Vault — guardar en agent.yaml como antes
 			viper.Set("AgentID", resp.ID)
@@ -98,7 +85,7 @@ func New(cfg *Config) *Agent {
 }
 
 func (a *Agent) Run() {
-	log.Printf("Agent inicialized — ID: %s", a.config.AgentID)
+	log.Printf("Agent initialized — ID: %s", a.config.AgentID)
 	log.Printf("Server: %s", a.config.ServerURL)
 	log.Printf("Poll every %d seconds", a.config.PollInterval)
 
@@ -150,7 +137,7 @@ func (a *Agent) tick() {
 		return
 	}
 
-	log.Printf("%d command(s) recieved", len(commands))
+	log.Printf("%d command(s) received", len(commands))
 
 	sem := make(chan struct{}, maxConcurrentCommands)
 	for _, cmd := range commands {
