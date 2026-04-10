@@ -1,42 +1,44 @@
 # Security Audit Report — SentinelEdge Agent
 
-| | |
-|---|---|
-| **Fecha** | 2026-04-01 |
-| **Auditor** | Claude Code (Sonnet 4.6) |
-| **Proyecto** | SentinelEdge Agent |
-| **Scope** | `/home/ardepa/sentineledge-agent` — 9 archivos Go + install.ps1 + agent.yaml |
-| **Audit anterior** | 2026-03-20 (0 CRITICAL · 2 HIGH · 2 MEDIUM · 2 LOW) |
+|                    |                                                                              |
+| ------------------ | ---------------------------------------------------------------------------- |
+| **Fecha**          | 2026-04-01                                                                   |
+| **Auditor**        | Claude Code (Sonnet 4.6)                                                     |
+| **Proyecto**       | SentinelEdge Agent                                                           |
+| **Scope**          | `/home/ardepa/sentineledge-agent` — 9 archivos Go + install.ps1 + agent.yaml |
+| **Audit anterior** | 2026-03-20 (0 CRITICAL · 2 HIGH · 2 MEDIUM · 2 LOW)                          |
 
 ---
 
 ## Executive Summary
 
-| Severidad | Cantidad |
-|-----------|----------|
-| 🔴 CRITICAL | **1** |
-| 🟠 HIGH | **3** |
-| 🟡 MEDIUM | **4** |
-| 🔵 LOW | **3** |
-| **Total** | **11** |
+| Severidad   | Cantidad |
+| ----------- | -------- |
+| 🔴 CRITICAL | **1**    |
+| 🟠 HIGH     | **3**    |
+| 🟡 MEDIUM   | **4**    |
+| 🔵 LOW      | **3**    |
+| **Total**   | **11**   |
 
 ### Mitigaciones confirmadas desde audit anterior
+
 - ✅ **Command allowlist** implementado — deny-by-default con 2 capas (SHA256 + regex patterns) — `internal/allowlist/allowlist.go`
 - ✅ **VaultClientSecret** removido del código fuente — se inyecta vía `SE_VAULT_CLIENT_SECRET` env var
 
 ### Regresiones vs 2026-03-20
+
 Ninguna. Los nuevos hallazgos HIGH/MEDIUM son consecuencia de la implementación del allowlist (race condition) o issues preexistentes identificados con mayor profundidad en este audit.
 
 ---
 
 ## Compliance Scores
 
-| Framework | Score | Estado |
-|-----------|-------|--------|
-| SOC2 TSC | **52.9%** | Parcial |
-| HIPAA | **56.7%** | Parcial |
-| CMMC L2 | **41.7%** | Insuficiente |
-| ISO 27001:2022 | **47.9%** | Parcial |
+| Framework      | Score     | Estado       |
+| -------------- | --------- | ------------ |
+| SOC2 TSC       | **52.9%** | Parcial      |
+| HIPAA          | **56.7%** | Parcial      |
+| CMMC L2        | **41.7%** | Insuficiente |
+| ISO 27001:2022 | **47.9%** | Parcial      |
 
 ---
 
@@ -51,6 +53,7 @@ Ninguna. Los nuevos hallazgos HIGH/MEDIUM son consecuencia de la implementación
 **Why it matters:** El agente ejecuta comandos PowerShell en endpoints Windows de clientes MSP como SYSTEM. Vector de ataque completo: MITM → servidor falso responde a `/version` con `download_url` + `hash` controlados por el atacante → el agente descarga y ejecuta malware como SYSTEM. La SHA256 verification actual no protege porque ambos valores vienen del mismo servidor comprometido.
 
 **Fix:**
+
 1. `communicator.go` — Configurar `resty` con TLS personalizado que verifique el cert de `saapi.ardepa.site` contra un pin (hash SHA256 del cert público):
    ```go
    tlsConf := &tls.Config{
@@ -77,6 +80,7 @@ Ninguna. Los nuevos hallazgos HIGH/MEDIUM son consecuencia de la implementación
 **Why it matters:** Si el servidor `/version` es comprometido o suplantado (ver FINDING-01), el atacante controla tanto `download_url` como `hash`. El agente descarga y ejecuta el binario malicioso como SYSTEM. La verificación SHA256 actual es inútil en este escenario porque el hash también viene del atacante.
 
 **Fix:**
+
 ```go
 // updater.go — Antes de download(), validar URL:
 allowed := []string{
@@ -90,6 +94,7 @@ func validateDownloadURL(u string) error {
     return fmt.Errorf("download_url not in allowlist: %s", u)
 }
 ```
+
 A largo plazo: firmar el binario con ed25519 y verificar la firma con clave pública embebida en el código.
 
 **Controls:** SOC2: CC6.7, CC6.8, CC8.1 | HIPAA: §164.312(c)(1), §164.312(c)(2) | CMMC: SI.L2-3.14.3, CM.L2-3.4.5 | ISO 27001: A.8.8, A.8.25, A.8.28
@@ -105,6 +110,7 @@ A largo plazo: firmar el binario con ed25519 y verificar la firma con clave púb
 **Why it matters:** Go detectará esto con `-race` y puede causar panic (`concurrent map read and map write`) → el servicio Windows se reinicia. O peor: corrupción silenciosa del allowlist donde comandos que deberían bloquearse pasan la validación.
 
 **Fix:**
+
 ```go
 // allowlist.go
 var (
@@ -136,11 +142,13 @@ approvedHashesMu.RUnlock()
 **What:** `vault.go` — `getToken()` se llama en cada `GetSecret()` y `StoreSecret()` sin cachear el access token. El `VaultClientSecret` nunca rota. Adicionalmente, el body completo del error de Vaultwarden se incluye en el log: `return "", fmt.Errorf("vault token error %d: %s", resp.StatusCode, string(body))`. La respuesta de error puede incluir información sensible del servidor.
 
 **Why it matters:**
+
 1. Sin rotación: si el `VaultClientSecret` se filtra, el atacante tiene acceso permanente a los tokens de todos los agentes.
 2. Error leakage: el body de error va a Windows Event Logs — visible para cualquier admin local del endpoint comprometido.
 3. Una autenticación OAuth por operación puede causar rate limiting en Vaultwarden bajo carga.
 
 **Fix:**
+
 ```go
 // vault.go — Cachear el access token con expiración:
 type VaultClient struct {
@@ -154,6 +162,7 @@ type VaultClient struct {
 // En error logging: solo loguear status code, no body completo.
 log.Printf("vault token error: status %d", resp.StatusCode)
 ```
+
 Política operativa: rotar `VaultClientSecret` cada 90 días.
 
 **Controls:** SOC2: CC6.1, CC6.3, CC7.2 | HIPAA: §164.308(a)(5)(ii)(D), §164.312(a)(2)(iii) | CMMC: IA.L2-3.5.3, AC.L2-3.1.1 | ISO 27001: A.5.17, A.8.5, A.8.15
@@ -185,6 +194,7 @@ Política operativa: rotar `VaultClientSecret` cada 90 días.
 **Why it matters:** Proceso local con privilegios de escritura en `%TEMP%\SYSTEM` puede inyectar comandos en el script de update y ejecutarlos como SYSTEM via el agente.
 
 **Fix:**
+
 ```go
 // updater.go — Usar nombre aleatorio:
 f, err := os.CreateTemp("", "se_update_*.ps1")
@@ -220,6 +230,7 @@ f.Close()
 **Why it matters:** Deployments descuidados pueden exponer la API key en código versionado, logs de RMM, o documentación de aprovisionamiento.
 
 **Fix:**
+
 ```powershell
 # install.ps1 — Añadir parámetro obligatorio:
 param(
@@ -243,6 +254,7 @@ param(
 **What:** `agent.go` — `go func() { a.executeCommand(cmdCopy) }()` sin límite. N comandos simultáneos crean N goroutines con procesos `powershell.exe`.
 
 **Fix:** Semáforo con capacidad 5:
+
 ```go
 const maxConcurrentCommands = 5
 sem := make(chan struct{}, maxConcurrentCommands)
@@ -264,6 +276,7 @@ for _, cmd := range commands {
 **What:** `communicator.go` línea 57: `Version: "0.1.0"`. La versión nunca se actualiza tras auto-updates. El MSP no puede determinar qué versión real está corriendo, dificultando gestión de vulnerabilidades.
 
 **Fix:**
+
 ```go
 // version.go
 var Version = "dev" // sobreescrito en compilación
@@ -290,20 +303,20 @@ var Version = "dev" // sobreescrito en compilación
 
 ## Remediation Priority
 
-| Prioridad | Finding | Esfuerzo | Acción |
-|-----------|---------|----------|--------|
-| 1 | FINDING-03 — Race condition allowlist | ~15 min | `sync.RWMutex` en `approvedHashes` |
-| 2 | FINDING-06 — Temp file predecible | ~5 min | `os.CreateTemp("", "se_update_*.ps1")` |
-| 3 | FINDING-08 — install.ps1 sin param | ~10 min | `param([Mandatory]$APIKey)` |
-| 4 | FINDING-04 — Vault error leakage | ~1h | Sanitizar log + cachear token |
-| 5 | FINDING-02 — download_url sin validar | ~30 min | Allowlist de dominios en updater |
-| 6 | FINDING-07 — OrgIDs hardcodeados | ~20 min | Mover a config + verificar .gitignore |
-| 7 | FINDING-10 — Versión hardcodeada | ~30 min | ldflags en build pipeline |
-| 8 | FINDING-09 — Sin límite goroutines | ~30 min | Semáforo en tick() |
-| 9 | FINDING-11 — Heartbeat sin respuesta | ~1h | Protocolo revocación |
-| 10 | FINDING-05 — Sin nonce/timestamp | ~2h | Coordinar con API |
-| 11 | FINDING-01 — Sin TLS pinning | Alto | Diseño + implementación TLS config |
+| Prioridad | Finding                               | Esfuerzo | Acción                                 |
+| --------- | ------------------------------------- | -------- | -------------------------------------- |
+| 1         | FINDING-03 — Race condition allowlist | ~15 min  | `sync.RWMutex` en `approvedHashes`     |
+| 2         | FINDING-06 — Temp file predecible     | ~5 min   | `os.CreateTemp("", "se_update_*.ps1")` |
+| 3         | FINDING-08 — install.ps1 sin param    | ~10 min  | `param([Mandatory]$APIKey)`            |
+| 4         | FINDING-04 — Vault error leakage      | ~1h      | Sanitizar log + cachear token          |
+| 5         | FINDING-02 — download_url sin validar | ~30 min  | Allowlist de dominios en updater       |
+| 6         | FINDING-07 — OrgIDs hardcodeados      | ~20 min  | Mover a config + verificar .gitignore  |
+| 7         | FINDING-10 — Versión hardcodeada      | ~30 min  | ldflags en build pipeline              |
+| 8         | FINDING-09 — Sin límite goroutines    | ~30 min  | Semáforo en tick()                     |
+| 9         | FINDING-11 — Heartbeat sin respuesta  | ~1h      | Protocolo revocación                   |
+| 10        | FINDING-05 — Sin nonce/timestamp      | ~2h      | Coordinar con API                      |
+| 11        | FINDING-01 — Sin TLS pinning          | Alto     | Diseño + implementación TLS config     |
 
 ---
 
-*Reporte generado por Claude Code (Sonnet 4.6) el 2026-04-01*
+_Reporte generado por Claude Code (Sonnet 4.6) el 2026-04-01_

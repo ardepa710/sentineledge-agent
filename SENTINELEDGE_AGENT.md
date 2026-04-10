@@ -8,16 +8,16 @@ Agente Windows escrito en Go que se instala como Windows Service en los endpoint
 
 ## Infraestructura
 
-| Componente | Detalle |
-|---|---|
-| Lenguaje | Go 1.21+ |
-| Plataforma | Windows (amd64) |
-| Instalación | `C:\Program Files\SentinelEdge\` |
-| Ejecutable | `sentineledge-agent.exe` |
-| Servicio | `SentinelEdgeAgent` (Windows Service) |
-| Config | `C:\Program Files\SentinelEdge\agent.yaml` |
-| Repo GitHub | `https://github.com/ardepa710/sentineledge-agent` |
-| Releases | `https://github.com/ardepa710/sentineledge-agent/releases/latest` |
+| Componente  | Detalle                                                           |
+| ----------- | ----------------------------------------------------------------- |
+| Lenguaje    | Go 1.21+                                                          |
+| Plataforma  | Windows (amd64)                                                   |
+| Instalación | `C:\Program Files\SentinelEdge\`                                  |
+| Ejecutable  | `sentineledge-agent.exe`                                          |
+| Servicio    | `SentinelEdgeAgent` (Windows Service)                             |
+| Config      | `C:\Program Files\SentinelEdge\agent.yaml`                        |
+| Repo GitHub | `https://github.com/ardepa710/sentineledge-agent`                 |
+| Releases    | `https://github.com/ardepa710/sentineledge-agent/releases/latest` |
 
 ---
 
@@ -80,15 +80,16 @@ main.go
 ```yaml
 ServerURL: "https://saapi.ardepa.site"
 TenantID: "tenant-sentineledge"
-AgentID: "a98ef245-..."          # Se genera al registrar
-PollInterval: 30                  # Segundos entre polls
+AgentID: "a98ef245-..." # Se genera al registrar
+PollInterval: 30 # Segundos entre polls
 VaultURL: "https://pwd.ardepa.site"
 VaultClientID: "user.f50ad073-3d5a-4bdd-8ce7-a4fed752c1e8"
-VaultClientSecret: ""    # supply via SE_VAULT_CLIENT_SECRET env var — never hardcode
+VaultClientSecret: "" # supply via SE_VAULT_CLIENT_SECRET env var — never hardcode
 # NOTA: El token NO se guarda en yaml, se carga de Vaultwarden
 ```
 
 **Vaultwarden IDs del agente:**
+
 - OrgID: `ebefd607-bd17-4a3f-aa01-4d1a28948ef5`
 - ColAgentsID: `d0f075e6-65d2-4f13-935c-e4d7a3dce261`
 - ColAPIID: `056e9be8-69ac-4e5e-95a8-bcbf803824a3`
@@ -108,6 +109,7 @@ type Communicator struct {
 ```
 
 **Métodos:**
+
 - `Register(serverURL, tenantID, apiKey)` → POST `/agents/register`
 - `PollCommands()` → GET `/commands/pending/{agent_id}` (Bearer token)
 - `ReportResult(result)` → POST `/commands/result` (Bearer token)
@@ -123,6 +125,7 @@ type Communicator struct {
 Soporta dos tipos de comandos:
 
 ### type: "powershell"
+
 ```go
 exec.CommandContext(ctx,
     "powershell.exe",
@@ -131,9 +134,11 @@ exec.CommandContext(ctx,
     "-Command", cmd.Payload,
 )
 ```
+
 Timeout por defecto: 5 minutos. Retorna stdout, stderr, exit_code.
 
 ### type: "update"
+
 Llama a `updater.Update()` — descarga, verifica hash e instala nueva versión.
 
 ---
@@ -145,6 +150,7 @@ Llama a `updater.Update()` — descarga, verifica hash e instala nueva versión.
 **CRÍTICO:** Usar `Get-WmiObject` — NO `Get-CimInstance` (tarda 2+ minutos).
 
 ### Estructura del Inventory
+
 ```go
 type Inventory struct {
     AgentID   string
@@ -164,6 +170,7 @@ type Inventory struct {
 ### Scripts PowerShell
 
 **Script principal (hardware):**
+
 ```powershell
 Get-WmiObject Win32_Processor | Select-Object -First 1 Name, NumberOfCores
 Get-WmiObject Win32_PhysicalMemory | Measure-Object Capacity -Sum
@@ -175,12 +182,14 @@ Get-WmiObject Win32_NetworkAdapterConfiguration | Where-Object IPEnabled
 ```
 
 **Script de software (corre en paralelo):**
+
 ```powershell
 Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*
 Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*
 ```
 
 **Ejecución paralela:**
+
 ```go
 // Software corre en goroutine concurrente con hardware
 go func() { /* software collection */ }()
@@ -199,6 +208,7 @@ swRes := <-swCh  // esperar resultado de software
 **Archivo:** `internal/updater/updater.go`
 
 ### Flujo de Update
+
 ```
 1. GET https://saapi.ardepa.site/version
    → Obtiene: version, hash (SHA256 minúsculas), download_url
@@ -219,6 +229,7 @@ swRes := <-swCh  // esperar resultado de software
 ```
 
 ### Constantes
+
 ```go
 const (
     VersionURL  = "https://saapi.ardepa.site/version"
@@ -228,6 +239,7 @@ const (
 ```
 
 ### Verificación de Hash
+
 ```go
 // IMPORTANTE: El hash debe estar en MINÚSCULAS en el endpoint /version
 // SHA256 se compara con strings.ToLower() en ambos lados
@@ -271,6 +283,7 @@ go build -ldflags "-X github.com/sentineledge/agent/internal/version.Version=v20
 > Formato recomendado: `v{año}.{mes}.{dia}-{build}` (ej. `v2026.04.01-1`).
 
 ### Generar Hash para /version
+
 ```powershell
 Get-FileHash ".\sentineledge-agent.exe" -Algorithm SHA256
 # Copiar el hash en MINÚSCULAS al .env del VPS como AGENT_UPDATE_HASH
@@ -357,14 +370,15 @@ type Result struct {
 
 ## Comandos Soportados
 
-| Type | Payload | Descripción |
-|---|---|---|
-| `powershell` | Script PS1 | Ejecuta PowerShell arbitrario |
-| `update` | "" (vacío) | Auto-update desde GitHub releases/latest |
+| Type         | Payload    | Descripción                              |
+| ------------ | ---------- | ---------------------------------------- |
+| `powershell` | Script PS1 | Ejecuta PowerShell arbitrario            |
+| `update`     | "" (vacío) | Auto-update desde GitHub releases/latest |
 
 ## Integración N8N
 
 Los workflows de N8N que envían comandos al agente deben:
+
 1. Usar `Body Content Type: JSON`
 2. Incluir header `x-api-key: <DASHBOARD_API_KEY>`
 3. Usar `JSON.stringify()` para el payload PowerShell multilínea:

@@ -13,3 +13,6 @@ Installer/sentineledge-agent.exe
 # Build output
 dist/
 build/
+
+# Claude Code session data
+.claude/
